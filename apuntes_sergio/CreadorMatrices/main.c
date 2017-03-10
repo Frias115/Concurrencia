@@ -2,18 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-int **crearMatriz(int numFilas, numColumnas){
+int **crearMatriz(int numFilas, int numColumnas){
 
 	int **matriz = (int **)malloc(sizeof(int*)*numFilas);
 	int i;
-	for(i = 0; i < numFilas, i++){
+	for(i = 0; i < numFilas; i++){
 		matriz[i] = (int*)malloc(sizeof(int)*numColumnas);
 	}
 	return matriz;
 }
 
 
-void rellenarMatriz(int **matriz, int numFilas, numColumnas, identidad){
+void rellenarMatriz(int **matriz, int numFilas, int numColumnas, int identidad){
 
 	int i, j;
 	if(identidad)

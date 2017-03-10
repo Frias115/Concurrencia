@@ -1,5 +1,5 @@
 EXEC=CrearMatriz
-OBJ=main.o main.o
+OBJ=main.o
 
 #compilador
 CC=gcc
