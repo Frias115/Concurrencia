@@ -12,13 +12,19 @@ public:
 	int numColumnas;
 	int **datos;
 
-	Matriz(string nombre);
+	Matriz(int numFilas, int numColumnas);
+
+	Matriz(string nombre, bool leerTraspuesta);
 
 	void guardarMatriz(string nombre);
 
 	void imprimirMatriz();
 
 	void reservarMemoria();
+
+	int multiplicaVector(int *vector1, int *vector2);
+
+	Matriz *multiplicarMatrices(Matriz *segundaMatriz);
 
 	~Matriz();
 };

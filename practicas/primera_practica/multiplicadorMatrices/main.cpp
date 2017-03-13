@@ -4,24 +4,19 @@ using namespace std;
 
 int main(int argc, char **argv){
 //USO PROGRAMA: multiplicarMatricesSec <MATRIZ1> <MATRIZ2> <MATRIZRESULTADO>
+	bool leerTraspuesta = true;
 
-	matriz m1, m2, mres;
+	Matriz *m1 = new Matriz(argv[1], !leerTraspuesta);
+	Matriz *m2 = new Matriz(argv[2], leerTraspuesta);
+	Matriz *resultado = m1->multiplicarMatrices(m2);
 
-//Carga de datos
-	m1 = LeerMatriz(argv[1], 0);
-	m1 = LeerMatriz(argv[2], 1);
+	cout << "Matriz 1: " << endl;
+	m1->imprimirMatriz();
+	cout <<  "Matriz 2 traspuesta: " << endl;
+	m2->imprimirMatriz();
+	cout << "Matriz resultado: " << endl;
+	resultado->imprimirMatriz();
 
-//Reserva de resultado 
-	mres.numFilas = m1.numFilas;
-	mres.numColumnas = m2.numColumnas;
-	mres.datos = crearMatriz(mres.numFilas, mres.numColumnas);
-
-//Multiplicamos matrices
-	multiplicaMatrices(m1, m2, mres);
-
-	escribirMatriz(mres.datos, mres.numFilas, mres.numColumnas, argv[3]);
-
-	imprimeMatriz(mres);
-
+	resultado->guardarMatriz("Resultado");
 	return 0;
 }
