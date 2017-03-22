@@ -22,7 +22,7 @@ int main(int argc, char **argv){
 //Guardar matriz
 	matriz->guardarMatriz(nombreFich);
 //Imprime para comprobar
-	matriz->imprimirMatriz();
+//	matriz->imprimirMatriz();
 
 return 0;
 }

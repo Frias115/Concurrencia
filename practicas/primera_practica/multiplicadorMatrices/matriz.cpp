@@ -88,3 +88,10 @@ void Matriz::imprimirMatriz(){
 		cout << endl;
 	}
 }
+
+Matriz::~Matriz(){
+	for (int i = 0; i < this->numColumnas; ++i){
+	free(this->datos[i]);
+	}
+	free(this->datos);
+}
