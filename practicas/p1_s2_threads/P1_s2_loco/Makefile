@@ -2,7 +2,9 @@ OBJS = main.o matriz.o
 EXE = multiplicadorMatrices
 GCC = g++
 INCLUDES = -I.
-CXXFLAGS = -g -pg
+CXXFLAGS = -g
+#linkado
+LDFLAGS = -lpthread
 all: $(OBJS)
 	$(GCC) $(OBJS) $(LDFLAGS) $(CXXFLAGS) -o $(EXE)
 

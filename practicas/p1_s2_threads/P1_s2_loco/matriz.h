@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
+#include <pthread.h>
 using namespace std;
 
 class Matriz{
@@ -22,9 +23,15 @@ public:
 
 	void reservarMemoria();
 
-	int multiplicaVector(int *vector1, int *vector2);
+	void *multiplicaVector(void *thread_params);
 
 	Matriz *multiplicarMatrices(Matriz *segundaMatriz);
 
 	~Matriz();
+};
+
+struct thread_params {
+    //int threadId;
+    int *vectorUno;
+    int *vectorDos;
 };

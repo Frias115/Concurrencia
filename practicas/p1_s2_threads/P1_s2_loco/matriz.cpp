@@ -1,5 +1,9 @@
 #include "matriz.h"
 
+int contador = 0;
+pthread_mutex_t cerrojo;
+
+
 Matriz::Matriz(string nombre, bool leerTraspuesta){
 
 	FILE *fichero = fopen(nombre.c_str(), "r+");
@@ -63,20 +67,37 @@ void Matriz::guardarMatriz(string nombre){
 	fclose(fich);
 }
 
-int Matriz::multiplicaVector(int *vector1, int *vector2) {
+void *Matriz::multiplicaVector(void *threadParams) {
+
+	thread_params *params = (thread_params*)threadParams;
+
 	int resultado = 0;
 	for (int k = 0; k < this->numColumnas; k++)
-		resultado += vector1[k] * vector2[k];
-	return resultado;
+		resultado += params->vectorUno[k] * params->vectorDos[k];
+	pthread_exit(&resultado);
 }
 
 Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	Matriz *resultado = new Matriz(this->numFilas, this->numColumnas);
+
+	pthread_t *thread = (pthread_t*)malloc(sizeof(pthread_t)*this->numColumnas);
+
+
 	for (int i = 0; i < this->numFilas; i++){
 		for (int j = 0; j < this->numColumnas; j++) {
-			resultado->datos[i][j] = multiplicaVector(this->datos[i], segundaMatriz->datos[j]);
+			
+			thread_params *params = (thread_params*)malloc(sizeof(thread_params));
+
+			//resultado->datos[i][j] = multiplicaVector(this->datos[i], segundaMatriz->datos[j]);
+			resultado->datos[i][j] = pthread_create(&(thread[j]), NULL, multiplicaVector, params);
 		}
+
+		void *vacio;
+		for (int j = 0; j < this->numColumnas; j++)
+			pthread_join(thread[j], &vacio);
+
 	}
+
 	return resultado;
 }
 
