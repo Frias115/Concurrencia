@@ -75,7 +75,10 @@ void *Matriz::multiplicaVector(void *threadParams) {
 	for (int k = 0; k < this->numColumnas; k++)
 		resultado += params->vectorUno[k] * params->vectorDos[k];
 	pthread_exit(&resultado);
+	delete(params);
 }
+
+//http://stackoverflow.com/questions/28205116/correct-way-to-pass-a-struct-to-pthread-within-a-for-loop
 
 Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	Matriz *resultado = new Matriz(this->numFilas, this->numColumnas);
@@ -86,10 +89,14 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	for (int i = 0; i < this->numFilas; i++){
 		for (int j = 0; j < this->numColumnas; j++) {
 			
-			thread_params *params = (thread_params*)malloc(sizeof(thread_params));
+			thread_params *params = new thread_params;
+
+			params->vectorUno = this->datos[i];
+			params->vectorDos = this->datos[j];
 
 			//resultado->datos[i][j] = multiplicaVector(this->datos[i], segundaMatriz->datos[j]);
-			resultado->datos[i][j] = pthread_create(&(thread[j]), NULL, multiplicaVector, params);
+			resultado->datos[i][j] = pthread_create(&(thread[j]), NULL, multiplicaVector, (void *)params);
+			
 		}
 
 		void *vacio;
