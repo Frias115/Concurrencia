@@ -72,10 +72,12 @@ void *Matriz::multiplicaVector(void *threadParams) {
 	thread_params *params = (thread_params*)threadParams;
 
 	int resultado = 0;
-	for (int k = 0; k < this->numColumnas; k++)
-		resultado += params->vectorUno[k] * params->vectorDos[k];
-	pthread_exit(&resultado);
-	delete(params);
+	for (int k = 0; k < params->numColumnas; k++){
+		resultado += params->vectorUno[k] * params->vectorDos[k];		
+	}
+	params->resultado = resultado;
+	threadParams = (void *)params;
+	pthread_exit(params);
 }
 
 //http://stackoverflow.com/questions/28205116/correct-way-to-pass-a-struct-to-pthread-within-a-for-loop
@@ -84,29 +86,26 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	Matriz *resultado = new Matriz(this->numFilas, this->numColumnas);
 
 	pthread_t *thread = (pthread_t*)malloc(sizeof(pthread_t)*this->numColumnas);
-
+	int threadID = 0;
 
 	for (int i = 0; i < this->numFilas; i++){
 		for (int j = 0; j < this->numColumnas; j++) {
-			
-			thread_params *params = new thread_params;
+			threadID++;
+			thread_params *params = (thread_params*)malloc(sizeof(thread_params));
 
 			params->vectorUno = this->datos[i];
-			params->vectorDos = this->datos[j];
+			params->vectorDos = segundaMatriz->datos[j];
+			params->numFilas = this->numFilas;
+			params->numColumnas = this->numColumnas;
 
-			//resultado->datos[i][j] = multiplicaVector(this->datos[i], segundaMatriz->datos[j]);
-			resultado->datos[i][j] = pthread_create(&(thread[j]), NULL, multiplicaVector, (void *)params);
-			
-		}
-
-		void *vacio;
-		for (int j = 0; j < this->numColumnas; j++)
-			pthread_join(thread[j], &vacio);
-
+			pthread_create(&(thread[threadID]), NULL, multiplicaVector, params);
+			pthread_join(thread[threadID], (void **)&params);
+			resultado->datos[i][j] = params->resultado;
+		}	
 	}
-
 	return resultado;
 }
+
 
 void Matriz::imprimirMatriz(){
 	for(int i = 0; i < this->numFilas; i++){

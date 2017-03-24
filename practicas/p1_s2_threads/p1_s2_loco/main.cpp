@@ -10,6 +10,6 @@ int main(int argc, char **argv){
 	Matriz *m2 = new Matriz(argv[2], leerTraspuesta);
 	Matriz *resultado = m1->multiplicarMatrices(m2);
 
-	resultado->guardarMatriz("Resultado");
+	resultado->guardarMatriz("resultado");
 	return 0;
 }
