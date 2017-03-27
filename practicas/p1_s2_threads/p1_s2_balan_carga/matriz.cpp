@@ -1,6 +1,6 @@
 #include "matriz.h"
 #define NUM_THREADS 4
-#define NUM_PAQUETES 500
+#define NUM_PAQUETES 1000
 
 int contador = 0;
 pthread_mutex_t cerrojo;
