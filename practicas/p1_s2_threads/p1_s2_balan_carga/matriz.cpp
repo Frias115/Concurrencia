@@ -1,8 +1,10 @@
 #include "matriz.h"
 #define NUM_THREADS 4
+#define NUM_PAQUETES 500
 
 int contador = 0;
 pthread_mutex_t cerrojo;
+paqueteTrabajo **paquetesGlobal = (paqueteTrabajo**)malloc(sizeof(paqueteTrabajo*)*NUM_PAQUETES);
 
 Matriz::Matriz(string nombre, bool leerTraspuesta){
 
@@ -73,15 +75,17 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	pthread_t *thread = (pthread_t*)malloc(sizeof(pthread_t)*NUM_THREADS);
 	int threadID = 0;
 
-	for (int i = 0; i < NUM_THREADS; ++i){
-		paqueteTrabajo *paquete = crearPaquetesDeTrabajo(i, segundaMatriz);
-		
-		pthread_create(&(thread[i]), NULL, multiplicarMatricesThreads, paquete);
-		pthread_join(thread[i], (void **)&paquete);
+	for (int i = 0; i < NUM_PAQUETES; ++i){
+		crearPaquetesDeTrabajo(i, segundaMatriz);
+	}	
 
-		for (int j = 0; j < paquete->numeroRealFilasACalcular; ++j){
-			for (int k = 0; k < paquete->numeroRealColumnasACalcular; ++k){
-				resultado->datos[j+paquete->filaInicial][k] = paquete->resultado[j][k];
+	for (int i = 0; i < NUM_PAQUETES; ++i){		
+		pthread_create(&(thread[i]), NULL, multiplicarMatricesThreads, paquetesGlobal[i]);
+		pthread_join(thread[i], (void **)&paquetesGlobal[i]);
+
+		for (int j = 0; j < paquetesGlobal[i]->numeroRealFilasACalcular; ++j){
+			for (int k = 0; k < paquetesGlobal[i]->numeroRealColumnasACalcular; ++k){
+				resultado->datos[j+paquetesGlobal[i]->filaInicial][k] = paquetesGlobal[i]->resultado[j][k];
 			}
 		}
 	}
@@ -92,11 +96,16 @@ void *Matriz::multiplicarMatricesThreads(void *paqueteDeTrabajo) {
 
 	paqueteTrabajo *paquete = (paqueteTrabajo*)paqueteDeTrabajo;
 
+	pthread_mutex_lock(&cerrojo);
+
 	for (int i = 0; i < paquete->numeroRealFilasACalcular; i++){
 		for (int j = 0; j < paquete->numeroRealColumnasACalcular; j++) {
 			paquete->resultado[i][j] = multiplicaVector(paquete->datosUno[i], paquete->datosDos[j], paquete->numeroRealColumnasACalcular);
 		}
 	}
+
+	pthread_mutex_unlock(&cerrojo);
+
 	pthread_exit(paquete);
 }
 
@@ -108,10 +117,10 @@ int Matriz::multiplicaVector(int *vector1, int *vector2, int numeroRealColumnasA
 	return resultado;
 }
 
-paqueteTrabajo *Matriz::crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaMatriz){
+void Matriz::crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaMatriz){
 	paqueteTrabajo *paquete = (paqueteTrabajo *)malloc(sizeof(paqueteTrabajo));
 
-	float resultado = (float)this->numFilas / (float)NUM_THREADS;
+	float resultado = (float)this->numFilas / (float)NUM_PAQUETES;
 	if(ceil(resultado) <= (this->numFilas - (ceil(resultado) * parteMatriz))){
 		paquete->numeroRealFilasACalcular = ceil(resultado);
 	}else{
@@ -140,7 +149,7 @@ paqueteTrabajo *Matriz::crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaM
 	for(int i = 0; i < paquete->numeroRealFilasACalcular; i++){
 		paquete->resultado[i] = (int*)malloc(sizeof(int)*paquete->numeroRealColumnasACalcular);
 	}
-	return paquete;
+	paquetesGlobal[parteMatriz] = paquete;
 }
 
 void Matriz::imprimirMatriz(){
