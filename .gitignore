@@ -31,3 +31,13 @@
 # Debug files
 *.dSYM/
 *.su
+
+#MATRICES QUE NO QUEREMOS SUBIR
+**/doscientosAleatoria
+**/doscientosIdentidad
+**/info.txt
+**/cincomilIdentidad
+**/cincomilAleatoria
+**/diezmilAleatoria
+**/diezmilIdentidad
+**/resultado

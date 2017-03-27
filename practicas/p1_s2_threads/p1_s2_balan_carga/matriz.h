@@ -40,7 +40,9 @@ public:
 
 	static void *multiplicarMatricesThreads(void *segundaMatriz);
 
-	void crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaMatriz);
+	int calcularYReservarPaquetes(Matriz *segundaMatriz);
+
+	void crearPaqueteDeTrabajo(int parteMatriz, int numeroPaquetes, Matriz *segundaMatriz);
 
 	~Matriz();
 };
