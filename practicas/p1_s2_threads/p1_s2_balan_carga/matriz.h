@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <list>
 #include <string>
 #include <pthread.h>
 #include <math.h>
@@ -40,9 +41,9 @@ public:
 
 	static void *multiplicarMatricesThreads(void *segundaMatriz);
 
-	int calcularYReservarPaquetes(Matriz *segundaMatriz);
+	int calcularYReservarPaquetes(Matriz *segundaMatriz, Matriz *resultado);
 
-	void crearPaqueteDeTrabajo(int parteMatriz, int numeroPaquetes, Matriz *segundaMatriz);
+	void crearPaqueteDeTrabajo(int parteMatriz, int numeroPaquetes, Matriz *segundaMatriz, Matriz *resultado);
 
 	~Matriz();
 };
