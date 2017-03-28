@@ -73,7 +73,7 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	pthread_t *thread = (pthread_t*)malloc(sizeof(pthread_t)*NUM_THREADS);
 	int threadID = 0;
 
-	for (int i = 0; i < NUM_THREADS; ++i){
+	for (int i = 0; i < NUM_THREADS; i++){
 		paqueteTrabajo *paquete = crearPaquetesDeTrabajo(i, segundaMatriz, resultado);
 		
 		pthread_create(&(thread[i]), NULL, multiplicarMatricesThreads, paquete);
@@ -81,7 +81,7 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	}
 
 	void* vacio;
-	for(int j = 0; j < this->numColumnas; j++){
+	for(int j = 0; j < NUM_THREADS; j++){
 		pthread_join(thread[j], &vacio);
 	}
 	return resultado;
@@ -96,7 +96,8 @@ void *Matriz::multiplicarMatricesThreads(void *paqueteDeTrabajo) {
 			paquete->resultado[i+paquete->filaInicial][j] = multiplicaVector(paquete->datosUno[i], paquete->datosDos[j], paquete->numeroRealColumnasACalcular);
 		}
 	}
-	pthread_exit(paquete);
+	free(paquete);
+	pthread_exit(NULL);
 }
 
 
