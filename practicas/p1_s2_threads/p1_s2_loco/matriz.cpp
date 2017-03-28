@@ -75,9 +75,10 @@ void *Matriz::multiplicaVector(void *threadParams) {
 	for (int k = 0; k < params->numColumnas; k++){
 		resultado += params->vectorUno[k] * params->vectorDos[k];		
 	}
-	params->resultado = resultado;
-	threadParams = (void *)params;
-	pthread_exit(params);
+	params->resultado[params->fila][params->columna] = resultado;
+	
+	free(params);
+	pthread_exit(NULL);
 }
 
 //http://stackoverflow.com/questions/28205116/correct-way-to-pass-a-struct-to-pthread-within-a-for-loop
@@ -86,22 +87,36 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	Matriz *resultado = new Matriz(this->numFilas, this->numColumnas);
 
 	pthread_t *thread = (pthread_t*)malloc(sizeof(pthread_t)*this->numColumnas);
-	int threadID = 0;
 
 	for (int i = 0; i < this->numFilas; i++){
 		for (int j = 0; j < this->numColumnas; j++) {
-			threadID++;
+			
 			thread_params *params = (thread_params*)malloc(sizeof(thread_params));
 
 			params->vectorUno = this->datos[i];
 			params->vectorDos = segundaMatriz->datos[j];
+			params->fila = i;
+			params->columna = j;
 			params->numFilas = this->numFilas;
 			params->numColumnas = this->numColumnas;
+			params->resultado = resultado->datos;
 
-			pthread_create(&(thread[threadID]), NULL, multiplicaVector, params);
-			pthread_join(thread[threadID], (void **)&params);
-			resultado->datos[i][j] = params->resultado;
+			// maximo numero thread ordenador sergio 62240
+			if(j > 60000){
+				void* vacio;
+				for(int j = 0; j < this->numColumnas; j++){
+					pthread_join(thread[j], &vacio);
+				}	
+			}
+
+			pthread_create(&(thread[j]), NULL, multiplicaVector, params);
 		}	
+
+		void* vacio;
+		for(int j = 0; j < this->numColumnas; j++){
+			pthread_join(thread[j], &vacio);
+		}
+
 	}
 	return resultado;
 }

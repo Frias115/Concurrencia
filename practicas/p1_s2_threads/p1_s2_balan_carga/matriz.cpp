@@ -1,6 +1,6 @@
 #include "matriz.h"
 #define NUM_THREADS 4
-#define NUM_FILAS_POR_PAQUETE 11
+#define NUM_FILAS_POR_PAQUETE 6
 
 int contador = 0;
 pthread_mutex_t cerrojo;
@@ -77,24 +77,24 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	int numeroPaquetes = calcularYReservarPaquetes(segundaMatriz);
 
 	for (int i = 0; i < numeroPaquetes; i++){	
-
+/*
 		for (int j = 0; j < this->numFilas; j++){
 			for (int k = 0; k < this->numColumnas; k++) {
 				if(paquetesGlobal[i]->datosDos[j][k] >= 10)
 					cout << "PRE:  j: "  << j<< " k: " << k <<"  paquetesGlobal[i]->datosDos[j][k]: " << paquetesGlobal[i]->datosDos[j][k] << endl;
 			}
-		}
+		}*/
 		pthread_create(&(thread[i]), NULL, multiplicarMatricesThreads, paquetesGlobal[i]);
 		pthread_join(thread[i], (void **)&paquetesGlobal[i]);
 
-
+/*
 		for (int j = 0; j < this->numFilas; j++){
 			for (int k = 0; k < this->numColumnas; k++) {
 				if(paquetesGlobal[i]->datosDos[j][k] >= 10)
 					cout << "POST:  j: "  << j<< " k: " << k <<"  paquetesGlobal[i]->datosDos[j][k]: " << paquetesGlobal[i]->datosDos[j][k] << endl;
 			}
 		}
-
+*/
 		for (int j = 0; j < paquetesGlobal[i]->numeroRealFilasACalcular; j++){
 			for (int k = 0; k < paquetesGlobal[i]->numeroRealColumnasACalcular; k++){
 				resultado->datos[j+paquetesGlobal[i]->filaInicial][k] = paquetesGlobal[i]->resultado[j][k];
@@ -103,7 +103,7 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 
 	}
 
-
+/*
 	for (int i = 0; i < 1; ++i){
 		cout << " paquetesGlobal[numeroPaquetes-i]->numeroRealFilasACalcular: "<< paquetesGlobal[32]->numeroRealFilasACalcular << endl;
 		for (int j = 0; j < paquetesGlobal[32]->numeroRealFilasACalcular; ++j){
@@ -114,7 +114,7 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 		}
 		cout << " paquetesGlobal[numeroPaquetes-i]->filaInicial: " << paquetesGlobal[33]->filaInicial << endl;
 	}
-/*
+
 		for (int j = 0; j < this->numFilas; ++j){
 			for (int k = 0; k < this->numColumnas; ++k){
 				cout << j <<" "<< k << " resultado->datos[j][k]: " << resultado->datos[j][k] << " this->datos[j][k]: " << this->datos[j][k] << endl;
@@ -218,13 +218,13 @@ void Matriz::crearPaqueteDeTrabajo(int parteMatriz, int numeroPaquetes, Matriz *
 			paquete->datosDos[i][j] = segundaMatriz->datos[i][j];
 		}
 	}
-
+/*
 	for (int j = 0; j < this->numFilas; j++){
 		for (int k = 0; k < this->numColumnas; k++) {
 			if(paquete->datosDos[j][k] >= 10)
 				cout << "paqueteTrabajo:  j: "  << j<< " k: " << k <<"  paquete->datosDos[j][k]: " << paquete->datosDos[j][k] << endl;
 		}
-	}
+	}*/
 
 
 

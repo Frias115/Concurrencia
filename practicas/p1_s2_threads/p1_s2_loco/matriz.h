@@ -32,9 +32,11 @@ public:
 
 struct thread_params {
     //int threadId;
+    int fila;
+    int columna;
     int numFilas;
     int numColumnas;
     int *vectorUno;
     int *vectorDos;
-    int resultado;
+    int **resultado;
 };

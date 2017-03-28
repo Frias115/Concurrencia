@@ -74,16 +74,15 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	int threadID = 0;
 
 	for (int i = 0; i < NUM_THREADS; ++i){
-		paqueteTrabajo *paquete = crearPaquetesDeTrabajo(i, segundaMatriz);
+		paqueteTrabajo *paquete = crearPaquetesDeTrabajo(i, segundaMatriz, resultado);
 		
 		pthread_create(&(thread[i]), NULL, multiplicarMatricesThreads, paquete);
-		pthread_join(thread[i], (void **)&paquete);
 
-		for (int j = 0; j < paquete->numeroRealFilasACalcular; ++j){
-			for (int k = 0; k < paquete->numeroRealColumnasACalcular; ++k){
-				resultado->datos[j+paquete->filaInicial][k] = paquete->resultado[j][k];
-			}
-		}
+	}
+
+	void* vacio;
+	for(int j = 0; j < this->numColumnas; j++){
+		pthread_join(thread[j], &vacio);
 	}
 	return resultado;
 }
@@ -94,7 +93,7 @@ void *Matriz::multiplicarMatricesThreads(void *paqueteDeTrabajo) {
 
 	for (int i = 0; i < paquete->numeroRealFilasACalcular; i++){
 		for (int j = 0; j < paquete->numeroRealColumnasACalcular; j++) {
-			paquete->resultado[i][j] = multiplicaVector(paquete->datosUno[i], paquete->datosDos[j], paquete->numeroRealColumnasACalcular);
+			paquete->resultado[i+paquete->filaInicial][j] = multiplicaVector(paquete->datosUno[i], paquete->datosDos[j], paquete->numeroRealColumnasACalcular);
 		}
 	}
 	pthread_exit(paquete);
@@ -105,17 +104,18 @@ int Matriz::multiplicaVector(int *vector1, int *vector2, int numeroRealColumnasA
 	int resultado = 0;
 	for (int k = 0; k < numeroRealColumnasACalcular; k++)
 		resultado += vector1[k] * vector2[k];
+
 	return resultado;
 }
 
-paqueteTrabajo *Matriz::crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaMatriz){
+paqueteTrabajo *Matriz::crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaMatriz, Matriz *resultado){
 	paqueteTrabajo *paquete = (paqueteTrabajo *)malloc(sizeof(paqueteTrabajo));
 
-	float resultado = (float)this->numFilas / (float)NUM_THREADS;
-	if(ceil(resultado) <= (this->numFilas - (ceil(resultado) * parteMatriz))){
-		paquete->numeroRealFilasACalcular = ceil(resultado);
+	float aux = (float)this->numFilas / (float)NUM_THREADS;
+	if(ceil(aux) <= (this->numFilas - (ceil(aux) * parteMatriz))){
+		paquete->numeroRealFilasACalcular = ceil(aux);
 	}else{
-		paquete->numeroRealFilasACalcular = (this->numFilas - (ceil(resultado) * parteMatriz));
+		paquete->numeroRealFilasACalcular = (this->numFilas - (ceil(aux) * parteMatriz));
 		parteMatriz++;
 	}
 
@@ -136,10 +136,8 @@ paqueteTrabajo *Matriz::crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaM
 		}
 	}
 
-	paquete->resultado = (int **)malloc(sizeof(int*)*paquete->numeroRealFilasACalcular);
-	for(int i = 0; i < paquete->numeroRealFilasACalcular; i++){
-		paquete->resultado[i] = (int*)malloc(sizeof(int)*paquete->numeroRealColumnasACalcular);
-	}
+	paquete->resultado = resultado->datos;
+
 	return paquete;
 }
 
