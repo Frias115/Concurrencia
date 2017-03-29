@@ -1,10 +1,8 @@
 #include "matriz.h"
-#define NUM_THREADS 4
-#define NUM_FILAS_POR_PAQUETE 6
+#define NUM_THREADS 8
+#define NUM_FILAS_POR_PAQUETE 40
 
-int contador = 0;
 pthread_mutex_t cerrojo;
-//paqueteTrabajo **paquetesGlobal;
 list<paqueteTrabajo*> *paquetesGlobal = new list<paqueteTrabajo*>();
 
 Matriz::Matriz(string nombre, bool leerTraspuesta){
@@ -74,23 +72,22 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	Matriz *resultado = new Matriz(this->numFilas, this->numColumnas);
 
 	pthread_t *thread = (pthread_t*)malloc(sizeof(pthread_t)*NUM_THREADS);
+	pthread_mutex_init(&cerrojo,NULL);
 
 	int numeroPaquetes = calcularYReservarPaquetes(segundaMatriz, resultado);
 	int i = 0;
-	do{	
 
-		// maximo numero thread ordenador sergio 62240
-		if(i > 60000){
+	do{	
+		if( i >= NUM_THREADS){
+			i = 0;
 			void* vacio;
 			for(int j = 0; j < NUM_THREADS; j++){
 				pthread_join(thread[j], &vacio);
 			}
-			i = 0;
 		}
 
 		pthread_create(&(thread[i]), NULL, multiplicarMatricesThreads, NULL);
 		i++;
-
 
 	}while(!paquetesGlobal->empty());
 	
@@ -99,18 +96,24 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 		pthread_join(thread[j], &vacio);
 	}
 
+	pthread_mutex_destroy(&cerrojo);
 	return resultado;
 }
 
-void *Matriz::multiplicarMatricesThreads(void *prueba) {
-
-	//paqueteTrabajo *paquete = (paqueteTrabajo*)paqueteDeTrabajo;
-	//list<paqueteTrabajo*> *listaPaquetes = (list<paqueteTrabajo*>*)paquetesGlobal;
-
+void *Matriz::multiplicarMatricesThreads(void *o) {
 
 	pthread_mutex_lock(&cerrojo);
-	paqueteTrabajo *paquete = paquetesGlobal->front();
-	paquetesGlobal->pop_front();
+
+	paqueteTrabajo *paquete;
+	if(!paquetesGlobal->empty()){
+		paquete = paquetesGlobal->front();
+	
+		paquetesGlobal->pop_front();
+		
+	} else{
+		pthread_mutex_unlock(&cerrojo);
+		pthread_exit(NULL);
+	}
 	pthread_mutex_unlock(&cerrojo);
 
 	for (int i = 0; i < paquete->numeroRealFilasACalcular; i++){
@@ -118,8 +121,7 @@ void *Matriz::multiplicarMatricesThreads(void *prueba) {
 			paquete->resultado[i+paquete->filaInicial][j] = multiplicaVector(paquete->datosUno[i], paquete->datosDos[j], paquete->numeroRealColumnasACalcular);
 		}
 	}
-
-	//free(paquete);
+	
 	pthread_exit(NULL);
 }
 
@@ -128,15 +130,13 @@ int Matriz::multiplicaVector(int *vector1, int *vector2, int numeroRealColumnasA
 	int resultado = 0;
 	for (int k = 0; k < numeroRealColumnasACalcular; k++){
 		resultado += vector1[k] * vector2[k];
-		//cout << "Resultado: " << resultado << " += " << vector1[k] << " * " << vector2[k] << endl;
 	}
-	//cout << "Resultado: " << resultado << endl;
 	return resultado;
 }
 
 int Matriz::calcularYReservarPaquetes(Matriz *segundaMatriz, Matriz *resultado){
 	int numeroPaquetes = ceil((float)this->numFilas/ (float)NUM_FILAS_POR_PAQUETE);
-	//paquetesGlobal = (paqueteTrabajo**)malloc(sizeof(paqueteTrabajo*)*numeroPaquetes);
+
 	for (int i = 0; i < numeroPaquetes; ++i){
 		crearPaqueteDeTrabajo(i, numeroPaquetes, segundaMatriz, resultado);
 	}
@@ -161,38 +161,13 @@ void Matriz::crearPaqueteDeTrabajo(int parteMatriz, int numeroPaquetes, Matriz *
 		paquete->datosUno[i] = (int*)malloc(sizeof(int)*paquete->numeroRealColumnasACalcular);
 	}
 
-
-
-
-	paquete->datosDos = (int **)malloc(sizeof(int*)*segundaMatriz->numFilas);
-	for(int i = 0; i < segundaMatriz->numFilas; i++){
-		paquete->datosDos[i] = (int*)malloc(sizeof(int)*segundaMatriz->numColumnas);
-	}
-
-
-	//paquete->datosDos = segundaMatriz->datos;
-
+	paquete->datosDos = segundaMatriz->datos;
 
 	for (int i = 0; i < paquete->numeroRealFilasACalcular; i++){
 		for (int j = 0; j < paquete->numeroRealColumnasACalcular; j++){
 			paquete->datosUno[i][j] = this->datos[i+paquete->filaInicial][j];
 		}
 	}
-
-	for (int i = 0; i < segundaMatriz->numFilas; i++){
-		for (int j = 0; j < segundaMatriz->numColumnas; j++){
-			paquete->datosDos[i][j] = segundaMatriz->datos[i][j];
-		}
-	}
-/*
-	for (int j = 0; j < this->numFilas; j++){
-		for (int k = 0; k < this->numColumnas; k++) {
-			if(paquete->datosDos[j][k] >= 10)
-				cout << "paqueteTrabajo:  j: "  << j<< " k: " << k <<"  paquete->datosDos[j][k]: " << paquete->datosDos[j][k] << endl;
-		}
-	}*/
-
-
 
 	paquete->resultado = resultado->datos;
 
