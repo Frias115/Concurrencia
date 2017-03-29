@@ -92,7 +92,7 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 	}while(!paquetesGlobal->empty());
 	
 	void* vacio;
-	for(int j = 0; j < NUM_THREADS; j++){
+	for(int j = 0; j < i; j++){
 		pthread_join(thread[j], &vacio);
 	}
 
