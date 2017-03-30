@@ -1,38 +1,39 @@
-
+Todo con 50 filas por paquete
 
 1 THREADS:
 
 Tiempo multiplicarMatrices(): 
-	 time: 21.998033 
+	 time: 22.054825 
 Tiempo Total: 
-	 time: 22.506983 
+	 time: 22.711345 
 
 2 THREADS:
 
 Tiempo multiplicarMatrices(): 
-	 time: 12.371594 
+	 time: 12.180089 
 Tiempo Total: 
-	 time: 12.655424 
+	 time: 12.424555 
 
 4 THREADS:
 
 Tiempo multiplicarMatrices(): 
-	 time: 10.940801 
+	 time: 10.879471 
 Tiempo Total: 
-	 time: 11.559512 
+	 time: 11.189006 
 
 6 THREADS:
 
 Tiempo multiplicarMatrices(): 
-	 time: 12.308815 
+	 time: 11.049539 
 Tiempo Total: 
-	 time: 12.628882 
+	 time: 11.294372 
 
 8 THREADS:
 
 Tiempo multiplicarMatrices(): 
-	 time: 11.868347 
+	 time: 10.930254 
 Tiempo Total: 
-	 time: 12.186353 
+	 time: 11.171760 
+
 
 

@@ -1,4 +1,5 @@
 Tiempo multiplicarMatrices(): 
-	 time: 73.902647 
+	 time: 67.223368 
 Tiempo Total: 
-	 time: 74.173910 
+	 time: 67.886561 
+

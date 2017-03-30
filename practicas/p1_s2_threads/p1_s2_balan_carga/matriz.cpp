@@ -1,9 +1,9 @@
 #include "matriz.h"
-#define NUM_THREADS 8
-#define NUM_FILAS_POR_PAQUETE 40
 
 pthread_mutex_t cerrojo;
 list<paqueteTrabajo*> *paquetesGlobal = new list<paqueteTrabajo*>();
+int NUM_THREADS;
+int NUM_FILAS_POR_PAQUETE;
 
 Matriz::Matriz(string nombre, bool leerTraspuesta){
 
@@ -68,8 +68,23 @@ void Matriz::guardarMatriz(string nombre){
 	fclose(fich);
 }
 
-Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
+Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads, int numeroFilasPaquete) {
 	Matriz *resultado = new Matriz(this->numFilas, this->numColumnas);
+
+	if( numeroThreads <= 0){
+		NUM_THREADS = 1;
+	} else
+	{
+		NUM_THREADS = numeroThreads;
+	}
+
+	if( numeroFilasPaquete <= 0){
+		NUM_FILAS_POR_PAQUETE = 1;
+	} else
+	{
+		NUM_FILAS_POR_PAQUETE = numeroFilasPaquete;
+	}
+	
 
 	pthread_t *thread = (pthread_t*)malloc(sizeof(pthread_t)*NUM_THREADS);
 	pthread_mutex_init(&cerrojo,NULL);

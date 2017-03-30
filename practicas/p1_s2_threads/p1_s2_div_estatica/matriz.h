@@ -36,7 +36,7 @@ public:
 
 	static int multiplicaVector(int *vector1, int *vector2, int numeroRealColumnasACalcular);
 
-	Matriz *multiplicarMatrices(Matriz *segundaMatriz);
+	Matriz *multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads);
 
 	static void *multiplicarMatricesThreads(void *segundaMatriz);
 

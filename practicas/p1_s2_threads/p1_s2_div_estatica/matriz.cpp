@@ -1,8 +1,9 @@
 #include "matriz.h"
-#define NUM_THREADS 4
+
 
 int contador = 0;
 pthread_mutex_t cerrojo;
+int NUM_THREADS = 1;
 
 Matriz::Matriz(string nombre, bool leerTraspuesta){
 
@@ -67,8 +68,16 @@ void Matriz::guardarMatriz(string nombre){
 	fclose(fich);
 }
 
-Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
+Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads) {
 	Matriz *resultado = new Matriz(this->numFilas, this->numColumnas);
+
+	if( numeroThreads <= 0){
+		NUM_THREADS = 1;
+	} else
+	{
+		NUM_THREADS = numeroThreads;
+	}
+	
 
 	pthread_t *thread = (pthread_t*)malloc(sizeof(pthread_t)*NUM_THREADS);
 	int threadID = 0;
@@ -90,6 +99,8 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz) {
 void *Matriz::multiplicarMatricesThreads(void *paqueteDeTrabajo) {
 
 	paqueteTrabajo *paquete = (paqueteTrabajo*)paqueteDeTrabajo;
+
+
 
 	for (int i = 0; i < paquete->numeroRealFilasACalcular; i++){
 		for (int j = 0; j < paquete->numeroRealColumnasACalcular; j++) {
@@ -115,14 +126,14 @@ paqueteTrabajo *Matriz::crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaM
 	float aux = (float)this->numFilas / (float)NUM_THREADS;
 	if(ceil(aux) <= (this->numFilas - (ceil(aux) * parteMatriz))){
 		paquete->numeroRealFilasACalcular = ceil(aux);
+		paquete->filaInicial = paquete->numeroRealFilasACalcular*parteMatriz;
 	}else{
 		paquete->numeroRealFilasACalcular = (this->numFilas - (ceil(aux) * parteMatriz));
-		parteMatriz++;
+		paquete->filaInicial = (ceil(aux))*parteMatriz;
 	}
 
 	paquete->numeroRealColumnasACalcular = this->numColumnas;
-
-	paquete->filaInicial = paquete->numeroRealFilasACalcular*parteMatriz;
+	
 
 	paquete->datosUno = (int **)malloc(sizeof(int*)*paquete->numeroRealFilasACalcular);
 	for(int i = 0; i < paquete->numeroRealFilasACalcular; i++){
