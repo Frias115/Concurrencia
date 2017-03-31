@@ -112,6 +112,7 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads, in
 	}
 
 	pthread_mutex_destroy(&cerrojo);
+	delete(paquetesGlobal);
 	return resultado;
 }
 
@@ -137,6 +138,7 @@ void *Matriz::multiplicarMatricesThreads(void *o) {
 		}
 	}
 	
+	free(paquete);
 	pthread_exit(NULL);
 }
 
