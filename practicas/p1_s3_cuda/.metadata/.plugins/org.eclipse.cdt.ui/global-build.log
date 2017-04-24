@@ -1,0 +1,11 @@
+14:31:44 **** Incremental Build of configuration Debug for project p1_s3_secuencial ****
+make all 
+Building target: p1_s3_secuencial
+Invoking: NVCC Linker
+/usr/local/cuda-8.0/bin/nvcc --cudart static --relocatable-device-code=false -gencode arch=compute_20,code=compute_20 -gencode arch=compute_20,code=sm_21 -link -o  "p1_s3_secuencial"  ./src/practica2Cuda.o   
+nvcc warning : The 'compute_20', 'sm_20', and 'sm_21' architectures are deprecated, and may be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+Finished building target: p1_s3_secuencial
+ 
+14:32:03 **** Incremental Build of configuration Debug for project p1_s3_secuencial ****
+make all 
+make: Nothing to be done for 'all'.
