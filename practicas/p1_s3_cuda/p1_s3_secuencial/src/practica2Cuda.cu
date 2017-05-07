@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#define LADO 10 //lado de la matriz
+#define LADO 2000 //lado de la matriz
 
 using namespace std;
 
@@ -66,11 +66,25 @@ void crearMatriz(char* nombre)
 
 //Imprime la matriz recibida
 void imprimirMatriz(float **matriz) {
-	for (int i = 0; i < LADO; i++) {
-		for (int j = 0; j < LADO; j++)
-			printf("%.0f ", matriz[i][j]);
-		printf("\n");
+
+	FILE* fich = fopen("resultado.bin", "w");
+	if(fich == NULL) {
+		//printf("Error");
+	} else{
+		//int aux = LADO;
+		//fwrite(&(aux), sizeof(char), sizeof(int), fich);
+		//fwrite(&(aux), sizeof(char), sizeof(int), fich);
+		int aux = 1;
+		for (int i = 0; i < LADO; i++) {
+			for (int j = 0; j < LADO; j++){
+				//printf("%.0f ", matriz[i][j]);
+				fwrite(&(matriz[j][i]), sizeof(float),1, fich);
+			}
+			//printf("\n");
+		}
 	}
+
+	fclose(fich);
 }
 
 //lee la matriz de un fichero binario
@@ -91,7 +105,8 @@ void leerDatosBin(char *nombreFichero, float ***datos, bool leerTraspuesta) {
 
 	if(!leerTraspuesta)
 		for (int i = 0; i < LADO; i++)
-			fread(datosLeidos[i], sizeof(float), LADO, fichero);
+			for (int j = 0; j < LADO; j++)
+				fread(&(datosLeidos[i][j]), sizeof(float), 1, fichero);
 
 	else //Leer la matriz de una forma traspuesta.
 		for (int i = 0; i < LADO; i++)
@@ -130,14 +145,16 @@ __global__ void kernel_multiplicarMatrices(int lado, float** matriz1, float** ma
 		}
 
 	resultado[fila][columna] = multiplicarVectores(lado, matriz1[fila], matriz2[columna]);
-	printf("cuda thread %d %d %.0f \n",fila,columna,resultado[fila][columna]);
+	//printf("cuda thread %d %d %.0f \n",fila,columna,resultado[fila][columna]);
 }
 
 
 
-int main(int argc, char **argv){
+int main(){
 
-	//USO PROGRAMA: multiplicadorMatrices <MATRIZ1> <MATRIZ2>
+	//Inicialización de la semilla para los números aleatorios.
+	srand(time(NULL));
+
 	bool leerTraspuesta = true;
 
 	//CARGA E INICIALIZACION DE LAS MATRICES
@@ -157,8 +174,20 @@ int main(int argc, char **argv){
 	float** matrizResultado_device;
 
 	//leemos de fichero binario
-	leerDatosBin(argv[1], &matriz1_host, !leerTraspuesta);
-	leerDatosBin(argv[2], &matriz2_host, leerTraspuesta);
+	leerDatosBin("nuevadosmilaleatoria.bin", &matriz1_host, leerTraspuesta);
+	leerDatosBin("nuevadosmilidentidad.bin", &matriz2_host, leerTraspuesta);
+
+	//IMPRIME LAS MATRICES GENERADAS
+	//printf("Se van a generar matrices de %d X %d : \n", LADO, LADO);
+	//printf("MATRIZ A: \n\n");
+	//imprimirMatriz(matriz1_host);
+	//printf("MATRIZ B: \n\n");
+	//imprimirMatriz(matriz2_host);
+
+	//se hace la traspuesta de la segunda matriz para poder multiplicarla
+	leerDatosBin("nuevadosmilidentidad.bin", &matriz2_host, !leerTraspuesta);
+	//printf("MATRIZ B traspuesta: \n\n");
+	//imprimirMatriz(matriz2_host);
 
 	//Reserva para el resultado del host
 	matrizResultado_host = (float**)malloc(LADO * sizeof(float*));
@@ -173,35 +202,35 @@ int main(int argc, char **argv){
 
 	//Reserva de memoria en GPU
 	cudaError_t err1 = cudaMalloc((void**)&matriz1_device, sizeof(float*)* LADO);
-	printf("Run Kernel: %s \n", cudaGetErrorString(err1));
+	//printf("Run Kernel: %s \n", cudaGetErrorString(err1));
 
 	err1 = cudaMalloc((void**)&matriz2_device, sizeof(float*)* LADO);
-	printf("Run Kernel: %s \n", cudaGetErrorString(err1));
+	//printf("Run Kernel: %s \n", cudaGetErrorString(err1));
 	err1 = cudaMalloc((void**)&matrizResultado_device, sizeof(float*)* LADO);
-	printf("Run Kernel: %s \n", cudaGetErrorString(err1));
+	//printf("Run Kernel: %s \n", cudaGetErrorString(err1));
 
 	//Reserva de memoria para cada uno de los arrays intermedios
 	for(int i = 0; i < LADO; i++){
 		err1 = cudaMalloc((void**)&matriz1_nexo[i], sizeof(float)* LADO);
-		printf("matriz1_nexo Run Kernel: %s \n", cudaGetErrorString(err1));
+		//printf("matriz1_nexo Run Kernel: %s \n", cudaGetErrorString(err1));
 		err1 = cudaMalloc((void**)&matriz2_nexo[i], sizeof(float)* LADO);
-		printf("matriz2_nexo Run Kernel: %s \n", cudaGetErrorString(err1));
+		//printf("matriz2_nexo Run Kernel: %s \n", cudaGetErrorString(err1));
 		cudaMalloc((void**)&(matrizResultado_nexo[i]), sizeof(float)* LADO);
 	}
 
 	//Copia el contenido de los arrays de CPU a los arrays de la matriz intermedia
 	for(int i = 0; i < LADO; i++){
 			err1 = cudaMemcpy(matriz1_nexo[i], matriz1_host[i], LADO * sizeof(float),cudaMemcpyHostToDevice);
-			printf("cudaMemcoy matriz2_host1 a nexo1 Run Kernel: %s \n", cudaGetErrorString(err1));
+			//printf("cudaMemcoy matriz2_host1 a nexo1 Run Kernel: %s \n", cudaGetErrorString(err1));
 			err1 = cudaMemcpy(matriz2_nexo[i], matriz2_host[i], LADO * sizeof(float),cudaMemcpyHostToDevice);
-			printf("cudaMemcoy matriz2_host2 a nexo2 Run Kernel: %s \n", cudaGetErrorString(err1));
+			//printf("cudaMemcoy matriz2_host2 a nexo2 Run Kernel: %s \n", cudaGetErrorString(err1));
 	}
 
 	//copia el contenido del array de punteros de CPU a GPU
 	err1 = cudaMemcpy(matriz1_device, matriz1_nexo, LADO * sizeof(float*),cudaMemcpyHostToDevice);
-	printf("copia de cpu a gpu array de punteros matriz1 Run Kernel: %s \n", cudaGetErrorString(err1));
+	//printf("copia de cpu a gpu array de punteros matriz1 Run Kernel: %s \n", cudaGetErrorString(err1));
 	err1 = cudaMemcpy(matriz2_device, matriz2_nexo, LADO * sizeof(float*),cudaMemcpyHostToDevice);
-	printf("copia de cpu a gpu array de punteros matriz2 Run Kernel: %s \n", cudaGetErrorString(err1));
+	//printf("copia de cpu a gpu array de punteros matriz2 Run Kernel: %s \n", cudaGetErrorString(err1));
 	cudaMemcpy(matrizResultado_device, matrizResultado_nexo, LADO * sizeof(float*),cudaMemcpyHostToDevice);
 
 	//Operaciones en GPU:
@@ -216,20 +245,23 @@ int main(int argc, char **argv){
 	dim3 dimensionGrid = dim3((int)(LADO / tamBloque) + 1, (int)(LADO / tamBloque) + 1, 1);
 	dim3 dimensionBlock = dim3(tamBloque, tamBloque, 1);
 
+	//printf("Antes de multiplicar\n");
 	//hace la multiplicacion en GPU
 	kernel_multiplicarMatrices <<<dimensionGrid,dimensionBlock>>>(LADO, matriz1_device, matriz2_device, matrizResultado_device);
 
 	//Para que espere hasta que todos los threads terminen (CUDA THREADS SYNCRONIZE)
 	cudaError_t error = cudaDeviceSynchronize();
+	//printf("Thread synchronization: %s \n", cudaGetErrorString(error));
 
 	//pasamos el resultado de device al host
 	for(int i = 0; i < LADO; i++){
 		err1 = cudaMemcpy(matrizResultado_host[i], matrizResultado_nexo[i], LADO * sizeof(float),cudaMemcpyDeviceToHost);
+		//printf("copia de gpu a cpu final Run Kernel: %s \n", cudaGetErrorString(err1));
 	}
 
-	////
-	//FALTA PASAR EL RESULTADO A UN ARCHIVO
-	////
+	//imprime la matriz resultado na vez copiada al host
+	//printf("El resultado es: \n");
+	imprimirMatriz(matrizResultado_host);
 
 	//LIBERACION DE MEMORIA DE CPU Y INTERMEDIA
 	for(int i = 0; i < LADO; i++){
@@ -259,4 +291,3 @@ int main(int argc, char **argv){
 	cudaFree(matrizResultado_device);
 
 }
-
