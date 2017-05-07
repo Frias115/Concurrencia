@@ -1,9 +1,9 @@
 /*
  ============================================================================
  Name        : practica2Cuda.cu
- Author      : Sergio Rosello & César Gil
- Version     : 0.1
- Copyright   : If you copy you will fail
+ Author      : Ana Casado, Roberto Frias & Sergio Rosello
+ Version     : 1.0
+ Copyright   : MIT
  Description : Optimizaciones usando GPU
  ============================================================================
  */
@@ -11,7 +11,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#define LADO 2000 //lado de la matriz
+#include "debug_time.h"
+#define LADO 2250 //lado de la matriz
+//2249 max extraño
 
 using namespace std;
 
@@ -26,15 +28,27 @@ void inicializarMatrizAleatoria(float **matriz, int tamFilas, int tamColumnas) {
 	int i, j;
 	for (i = 0; i < tamFilas; i++)
 		for (j = 0; j < tamColumnas; j++)
-			matriz[i][j] = rand() % 10;
-	//matriz[i][j] = 1;
+			matriz[i][j] = rand();
+}
+
+void inicializarMatrizIdentidad(float **matriz, int tamFilas, int tamColumnas) {
+	int i, j;
+	for (i = 0; i < tamFilas; i++){
+		for (j = 0; j < tamColumnas; j++){
+			if(i == j){
+				matriz[i][j] = 1;
+			}
+			else{
+				matriz[i][j] = 0;
+			}
+		}
+	}
 }
 
 void crearMatriz(char* nombre)
 {
 
 	int i = 0;
-	//int j = 0;
 
 	//Inicializamos memoria para la matriz.
 	float **mat = (float **)malloc(sizeof(float *) * LADO);
@@ -43,6 +57,39 @@ void crearMatriz(char* nombre)
 	}
 
 	inicializarMatrizAleatoria(mat, LADO, LADO);
+
+	//Abrimos el fichero binario mat en modo de escritura.
+	FILE* fich_bin = fopen(nombre, "w");
+
+	//Escribimos en el archivo binario apuntado por fich_bin
+
+	//Volcamos los datos de la matriz en el archivo binario apuntado por fich_bin
+	for (i = 0; i < LADO; i++)
+		fwrite(mat[i], sizeof(int), LADO, fich_bin);
+	fclose(fich_bin);
+
+	//Liberamos memoria de cada uno de los elementos de la matriz.
+	for (i = 0; i < LADO; i++) {
+		free(mat[i]);
+	}
+
+	//Liberamos memoria de la matriz.
+	free(mat);
+
+}
+
+void crearMatrizIdentidad(char* nombre)
+{
+
+	int i = 0;
+
+	//Inicializamos memoria para la matriz.
+	float **mat = (float **)malloc(sizeof(float *) * LADO);
+	for (i = 0; i < LADO; i++) {
+		mat[i] = (float *)malloc(sizeof(float) * LADO);
+	}
+
+	inicializarMatrizIdentidad(mat, LADO, LADO);
 
 	//Abrimos el fichero binario mat en modo de escritura.
 	FILE* fich_bin = fopen(nombre, "w");
@@ -92,9 +139,6 @@ void leerDatosBin(char *nombreFichero, float ***datos, bool leerTraspuesta) {
 	FILE* fichero = fopen(nombreFichero, "r");
 	//Funciones accesibles: fclose, fread, fwrite
 	float **datosLeidos;
-	int numFilas, numColumnas;
-	int i = 0, j = 0;
-
 
 	//Inicializamos un array para guardar todos los datos que leemos del fichero.
 	datosLeidos = (float **)malloc(LADO * sizeof(float*));
@@ -114,19 +158,24 @@ void leerDatosBin(char *nombreFichero, float ***datos, bool leerTraspuesta) {
 				fread(&(datosLeidos[j][i]), sizeof(float), 1, fichero);
 
 
-	//Derreferenciación.
+	//Desrreferenciación.
 	(*datos) = datosLeidos;
 	fclose(fichero);
 }
 
 //lamada de la gpu para multiplicar los vectores
 __device__ float multiplicarVectores(int lado, float* fila, float* columna){
-	if(threadIdx.x == 0 && threadIdx.y == 0)
-		printf("Multiplicando vectores\n");
+	if(threadIdx.x == 0 && threadIdx.y == 0){
+		//printf("Multiplicando vectores\n");
+	}
 	float resultadoAux = 0;
 	for(int i = 0; i<lado; i++){
+		//printf("fila: %.0f columna: %.0f", fila[i], columna[i]);
 		resultadoAux += fila[i] * columna[i];
 	}
+
+	//printf("resultado: %.0f \n", resultadoAux);
+
 
 	return resultadoAux;
 
@@ -151,7 +200,11 @@ __global__ void kernel_multiplicarMatrices(int lado, float** matriz1, float** ma
 
 
 int main(){
+	crearMatriz("pruebaaleatoria.bin");
+	crearMatrizIdentidad("pruebaidentidad.bin");
 
+	DEBUG_TIME_INIT;
+	DEBUG_TIME_START;
 	//Inicialización de la semilla para los números aleatorios.
 	srand(time(NULL));
 
@@ -174,8 +227,8 @@ int main(){
 	float** matrizResultado_device;
 
 	//leemos de fichero binario
-	leerDatosBin("nuevadosmilaleatoria.bin", &matriz1_host, leerTraspuesta);
-	leerDatosBin("nuevadosmilidentidad.bin", &matriz2_host, leerTraspuesta);
+	leerDatosBin("pruebaaleatoria.bin", &matriz1_host, leerTraspuesta);
+	//leerDatosBin("nuevadosmilidentidad.bin", &matriz2_host, leerTraspuesta);
 
 	//IMPRIME LAS MATRICES GENERADAS
 	//printf("Se van a generar matrices de %d X %d : \n", LADO, LADO);
@@ -185,7 +238,7 @@ int main(){
 	//imprimirMatriz(matriz2_host);
 
 	//se hace la traspuesta de la segunda matriz para poder multiplicarla
-	leerDatosBin("nuevadosmilidentidad.bin", &matriz2_host, !leerTraspuesta);
+	leerDatosBin("pruebaidentidad.bin", &matriz2_host, !leerTraspuesta);
 	//printf("MATRIZ B traspuesta: \n\n");
 	//imprimirMatriz(matriz2_host);
 
@@ -247,7 +300,16 @@ int main(){
 
 	//printf("Antes de multiplicar\n");
 	//hace la multiplicacion en GPU
-	kernel_multiplicarMatrices <<<dimensionGrid,dimensionBlock>>>(LADO, matriz1_device, matriz2_device, matrizResultado_device);
+	{
+		DEBUG_TIME_INIT;
+		DEBUG_TIME_START;
+
+		kernel_multiplicarMatrices <<<dimensionGrid,dimensionBlock>>>(LADO, matriz1_device, matriz2_device, matrizResultado_device);
+
+		DEBUG_TIME_END;
+		DEBUG_PRINT_FINALTIME("Tiempo multiplicarMatrices(): \n\t");
+
+	}
 
 	//Para que espere hasta que todos los threads terminen (CUDA THREADS SYNCRONIZE)
 	cudaError_t error = cudaDeviceSynchronize();
@@ -290,4 +352,8 @@ int main(){
 	cudaFree(matriz2_device);
 	cudaFree(matrizResultado_device);
 
+	DEBUG_TIME_END;
+
+	DEBUG_PRINT_FINALTIME("Tiempo Total: \n\t");
+	
 }
