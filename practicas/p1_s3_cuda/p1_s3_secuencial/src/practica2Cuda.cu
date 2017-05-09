@@ -17,6 +17,93 @@
 
 using namespace std;
 
+void inicializarMatrizAleatoria(float **matriz, int tamFilas, int tamColumnas) {
+	int i, j;
+	for (i = 0; i < tamFilas; i++)
+		for (j = 0; j < tamColumnas; j++)
+			matriz[i][j] = rand();
+}
+
+void inicializarMatrizIdentidad(float **matriz, int tamFilas, int tamColumnas) {
+	int i, j;
+	for (i = 0; i < tamFilas; i++){
+		for (j = 0; j < tamColumnas; j++){
+			if(i == j){
+				matriz[i][j] = 1;
+			}
+			else{
+				matriz[i][j] = 0;
+			}
+		}
+	}
+}
+
+void crearMatriz(char* nombre, int size)
+{
+
+	int i = 0;
+
+	//Inicializamos memoria para la matriz.
+	float **mat = (float **)malloc(sizeof(float *) * size);
+	for (i = 0; i < size; i++) {
+		mat[i] = (float *)malloc(sizeof(float) * size);
+	}
+
+	inicializarMatrizAleatoria(mat, size, size);
+
+	//Abrimos el fichero binario mat en modo de escritura.
+	FILE* fich_bin = fopen(nombre, "w");
+
+	//Escribimos en el archivo binario apuntado por fich_bin
+
+	//Volcamos los datos de la matriz en el archivo binario apuntado por fich_bin
+	for (i = 0; i < size; i++)
+		fwrite(mat[i], sizeof(int), size, fich_bin);
+	fclose(fich_bin);
+
+	//Liberamos memoria de cada uno de los elementos de la matriz.
+	for (i = 0; i < size; i++) {
+		free(mat[i]);
+	}
+
+	//Liberamos memoria de la matriz.
+	free(mat);
+
+}
+
+void crearMatrizIdentidad(char* nombre, int size)
+{
+
+	int i = 0;
+
+	//Inicializamos memoria para la matriz.
+	float **mat = (float **)malloc(sizeof(float *) * size);
+	for (i = 0; i < size; i++) {
+		mat[i] = (float *)malloc(sizeof(float) * size);
+	}
+
+	inicializarMatrizIdentidad(mat, size, size);
+
+	//Abrimos el fichero binario mat en modo de escritura.
+	FILE* fich_bin = fopen(nombre, "w");
+
+	//Escribimos en el archivo binario apuntado por fich_bin
+
+	//Volcamos los datos de la matriz en el archivo binario apuntado por fich_bin
+	for (i = 0; i < size; i++)
+		fwrite(mat[i], sizeof(int), size, fich_bin);
+	fclose(fich_bin);
+
+	//Liberamos memoria de cada uno de los elementos de la matriz.
+	for (i = 0; i < size; i++) {
+		free(mat[i]);
+	}
+
+	//Liberamos memoria de la matriz.
+	free(mat);
+
+}
+
 //Guarda la matriz recibida en resultado.bin
 void guardarMatriz(float **matriz, int size) {
 
@@ -93,6 +180,19 @@ __global__ void kernel_multiplicarMatrices(int lado, float** matriz1, float** ma
 	int fila = blockIdx.x * blockDim.y + threadIdx.y;
 	int columna = blockIdx.y * blockDim.x + threadIdx.x;
 
+
+ 	//HABRIA QUE HACERLO CON MEMORIA COMPARTIDA PARA QUE LOS ACCESOS SEAN MUCHO MENOS https://devblogs.nvidia.com/parallelforall/using-shared-memory-cuda-cc/
+ 	//LA IDEA ES PILLAR UNAS CUANTAS FILAS O COLUMNAS Y UTILIZARLAS PARA REALIZAR TODOS LOS CALCULOS, DE MANERA QUE PILLAMOS UN BLOQUE DE X COLUMNAS QUE QUEPA 
+ 	// EN LOS 40K QUE ACEPTAN 1024 THREADS(32*32) Y ASI UTILIZARLA EN TODOS LOS CALCULOS
+
+ 	//TAMBIEN HAY QUE COLOCAR LA PARTE DE CREAR MATRICES EN OTRO LADO
+
+ 	//NO ESTARIA MAL TAMPOCO INTENTAR ARREGLARLO PARA QUE FUNCIONE CON NUESTRAS MATRICES ANTERIORES, AUNQUE TAMPOCO ES NECESARIO
+
+ 	//HAY QUE VOLVER A HACER TODOS LOS CALCULOS EN LAS OTRAS ENTREGAS PARA DAR BIEN LOS TIEMPOS Y EXPLICAR PORQUE DAN QUE ERA POR LO DEL NUMERO DE CORES DEL
+ 	//PROCESADOR 
+
+
 	//control de errores del thread
 	if((fila >= lado) || (columna >= lado)){
 		//printf("ha ocurrido un error en multiplicacion\n");
@@ -108,6 +208,9 @@ __global__ void kernel_multiplicarMatrices(int lado, float** matriz1, float** ma
 int main(int argc, char **argv){
 	DEBUG_TIME_INIT;
 	DEBUG_TIME_START;
+
+
+
 	//Inicialización de la semilla para los números aleatorios.
 	srand(time(NULL));
 
