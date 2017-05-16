@@ -10,6 +10,12 @@
 
 #define TAG 1
 
+typedef struct cabe{
+	int numFilas; 
+	int numColumnas;
+	int finaini, filafin;
+}cabe_t;
+
 void maestro(int rank, int nproc){
 
 	char *msg = (char  *)malloc(100);
@@ -19,7 +25,7 @@ void maestro(int rank, int nproc){
 	sprintf(msg, "\n\n\t Esto es un mensaje del proceso %d al proceso %d", source, dest);
 
 	for (int i = 1; i < nproc; i++){
-		MPI_Send(msg, 100, MPI_CHAR, dest, TAG, MPI_COMM_WORLD);
+		MPI_Send(&cabecera, sizeof(cabe_t), MPI_BYTE, i, TAG, MPI_COMM_WORLD);
 		printf("\n Mensaje enviado a %d", i);
 	}
 }
@@ -29,7 +35,12 @@ void esclavo(int rank, int nproc){
 	char *msg = (char  *)malloc(100);
 
 	int dest = rank;
-	MPI_Recv(msg, 100, MPI_CHAR, 0, TAG, MPI_COMM_WORLD, &status);
+	cabe_t cabecera;
+
+	MPI_Recv(&cabecera, sizeof(cabe_t), MPI_BYTE, 0, TAG, MPI_COMM_WORLD, &status);
+	cabecera.numFilas;
+
+	//Malloc matriz 1, malloc matriz 2 etc...
 	printf("\n Mensaje recibido en %d", dest);
 	printf("%s\n", msg);
 }
