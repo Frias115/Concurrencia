@@ -1,0 +1,8 @@
+# Lista de IP's de ordenadores a utilizar
+# Para la práctica -> slots=1
+
+# Para probar en casa: (cada uno de los ejecutables en distintos directorios)
+# localhost slots=1
+
+10.4.0.29 slots=2
+10.4.0.44 slots=2

@@ -1,8 +1,13 @@
 
-
+//Para c
 //Para compilar: mpicc ejemplo
+
+//Para c++
+//para compilar: mpiCC ejemplo.cpp -o ejemplo
+
 //Para ejecutar: mpirun -np 4 (ruta del ejecutable)
 
+//Para ejecutar en cluster: mpirun -np 4 (ruta del ejecutable) -hostfile hostfile.txt
 
 #include "mpi.h"
 #include <stdio.h>
@@ -25,6 +30,8 @@ typedef struct cabe{
 
 //Para el esclavo
 matriz *recibeMatriz(){
+
+	MPI_STATUS status;
 	cabe cabecera;
 	MPI_Recv(&cabecera, sizeof(cabe_t), MPI_BYTE, 0, TAG, MPI_COMM_WORLD, &status);
 	matriz *m1 = (matriz *)malloc()...;
@@ -49,6 +56,8 @@ void envia_matriz(matriz *m1, int dest){
 	
 	for(int i = 0; i < m1->numFilas; i++){
 		//Enviamos cabecera
+		//Rellenado de datos (debería estar relleno cuando -> parte creaciond e matrices)
+		memset(m1->datos[i], sizeof(float)*m1->numColumnas);
 		MPI_Send(m1->datos[i], m1->numColumnas, MPI_FLOAT, dest, TAG, MPI_COMM_WORLD);
 	}
 }
