@@ -11,6 +11,7 @@
 #define TAG 1
 
 typedef struct matriz{
+	int numFilas, numColumnas;
 	float ***datos;
 }matriz;
 
@@ -18,37 +19,65 @@ typedef struct cabe{
 	int numFilas; 
 	int numColumnas;
 	int finaini, filafin;
+	/*Añadir si necesitas fina inicial o fila final*/
 }cabe_t;
 
-void maestro(int rank, int nproc){
 
-	char *msg = (char  *)malloc(100);
-	int source = rank;
-	int dest = 1;
+//Para el esclavo
+matriz *recibeMatriz(){
+	cabe cabecera;
+	MPI_Recv(&cabecera, sizeof(cabe_t), MPI_BYTE, 0, TAG, MPI_COMM_WORLD, &status);
+	matriz *m1 = (matriz *)malloc()...;
 
-	sprintf(msg, "\n\n\t Esto es un mensaje del proceso %d al proceso %d", source, dest);
+	m1->numFilas = cabecera.numFilas;
+	m1->numColumnas = cabecera.numColumnas;
 
-	//Esto así no funcionaría
-	matriz * m1 = crearMatriz("matrix1.bin");
-	for (int i = 1; i < nproc; i++){
-		MPI_Send(&cabecera, sizeof(cabe_t), MPI_BYTE, i, TAG, MPI_COMM_WORLD);
-		printf("\n Mensaje enviado a %d", i);
+	//Malloc de los datos
+	m1->datos = (float **)malloc(m1->numFilas...)
+	for(int i = 0; i < m1->numFilas; i++){
+		//Recibir
+		m1->datos[i] = (float **)malloc(m1->numColumnas...)
+		MPI_Send(m1->datos[i], m1->numColumnas, MPI_FLOAT, 0, TAG, MPI_COMM_WORLD);
 	}
+}
+
+//Para el maestro
+void envia_matriz(matriz *m1, int dest){
+	cabe cabecera;
+	cabecera.numFilas = m1->numFilas;
+	cabecera.numColumnas = m1->numColumnas;
+	
+	for(int i = 0; i < m1->numFilas; i++){
+		//Enviamos cabecera
+		MPI_Send(m1->datos[i], m1->numColumnas, MPI_FLOAT, dest, TAG, MPI_COMM_WORLD);
+	}
+}
+
+//Añadir parametros necesarios para leer (m origen y nombre de matriz resultado)
+void maestro(int rank, int nproc, char *m1, char *m2, char *mres){
+
+	//Leer m1
+	//Leer m1
+	//Dividir matrices (crear paquetes)
+
+	//Por cada esclavo:
+		//enviar sub-matriz 
+
+	//Por cada esclavo:
+		//Recibir resultados
+
+	//Escribir resultado
+
 }
 
 void esclavo(int rank, int nproc){
 
-	char *msg = (char  *)malloc(100);
+	//Rrecibe m1
+	//Recibe m2
+	//multiplicat (estática o dinámica o gpu)
 
-	int dest = rank;
-	cabe_t cabecera;
+	//Devolver resultado
 
-	MPI_Recv(&cabecera, sizeof(cabe_t), MPI_BYTE, 0, TAG, MPI_COMM_WORLD, &status);
-	cabecera.numFilas;
-
-	//Malloc matriz 1, malloc matriz 2 etc...
-	printf("\n Mensaje recibido en %d", dest);
-	printf("%s\n", msg);
 }
 
 int main(int arg, char **argv){
