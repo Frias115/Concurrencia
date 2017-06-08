@@ -37,7 +37,7 @@ public:
 
 	Matriz *multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads, int numeroEsclavos);
 
-	paqueteTrabajo *crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaMatriz, Matriz *resultado);
+	paqueteTrabajo *crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaMatriz, Matriz *resultado, int numeroEsclavos);
 
 	~Matriz();
 };

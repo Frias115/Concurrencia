@@ -67,7 +67,7 @@ void Matriz::guardarMatriz(string nombre){
 
 Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads, int numeroEsclavos) {
 	Matriz *resultado = new Matriz(this->numFilas, this->numColumnas);
-
+	cout << "Tengo "  << numeroEsclavos-1 << " esclavos"<< endl;
 	if( numeroThreads <= 0){
 		NUM_THREADS = 1;
 	} else
@@ -76,40 +76,52 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads, in
 	}
 
 	for (int i = 1; i < numeroEsclavos; i++){
-		paqueteTrabajo *paquete = crearPaquetesDeTrabajo(i, segundaMatriz, resultado);
+		paqueteTrabajo *paquete = crearPaquetesDeTrabajo((i -1), segundaMatriz, resultado, (numeroEsclavos -1));
 		
-		//envio 
-		MPI_Send(paquete, sizeof(paqueteTrabajo), MPI_BYTE, i, 0, MPI_COMM_WORLD);
-		MPI_Send(&NUM_THREADS, sizeof(int), MPI_BYTE, i, 0, MPI_COMM_WORLD);
-		printf("\n Mensaje enviado a %d", i);
+		printf("\n Mensaje enviado a %d \n", i);
 
 		free(paquete);
 	}
 
+	cout << "Los esclavos ya tienen la informacion " << endl;
+
 	for (int i = 1; i < numeroEsclavos; i++){
 		MPI_Status status;
-		paqueteTrabajo *paquete = (paqueteTrabajo *)malloc(sizeof(paqueteTrabajo));
+		
+		int filaInicial;
+		int numeroRealFilasACalcular;
+		int numeroRealColumnasACalcular;
 
 		//recibo
-		MPI_Recv(paquete, sizeof(paqueteTrabajo), MPI_BYTE, i, 0, MPI_COMM_WORLD, &status);
+		MPI_Recv(&filaInicial, sizeof(int), MPI_BYTE, i, 0, MPI_COMM_WORLD, &status);
+		MPI_Recv(&numeroRealFilasACalcular, sizeof(int), MPI_BYTE, i, 0, MPI_COMM_WORLD, &status);
+		MPI_Recv(&numeroRealColumnasACalcular, sizeof(int), MPI_BYTE, i, 0, MPI_COMM_WORLD, &status);
 
-		//junto resultados
-		for (int i = 0; i < paquete->numeroRealFilasACalcular; i++){
-			for (int j = 0; j < paquete->numeroRealColumnasACalcular; j++) {
-				resultado->datos[i+paquete->filaInicial][j] = paquete->resultado[i+paquete->filaInicial][j];
-			}
+		int** aux = (int **)malloc(sizeof(int*)*numeroRealColumnasACalcular);
+		for(int j = 0; j < numeroRealColumnasACalcular; j++){
+			aux[j] = (int*)malloc(sizeof(int)*numeroRealColumnasACalcular);
 		}
 
-		free(paquete);
+		for (int j = 0; j < numeroRealColumnasACalcular; j++){
+			MPI_Recv(aux[j], numeroRealColumnasACalcular, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
+		}
+
+		cout << "Recibo el paquete del esclavo " << i << endl;
+		//junto resultados
+		for (int j = 0; j < numeroRealColumnasACalcular; j++){
+			resultado->datos[j+filaInicial] = aux[j+filaInicial];
+		}
+		free(aux);
 	}
 
 	return resultado;
 }
 
-paqueteTrabajo *Matriz::crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaMatriz, Matriz *resultado){
+paqueteTrabajo *Matriz::crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaMatriz, Matriz *resultado, int numeroEsclavos){
 	paqueteTrabajo *paquete = (paqueteTrabajo *)malloc(sizeof(paqueteTrabajo));
 
-	float aux = (float)this->numFilas / (float)NUM_THREADS;
+	float aux = (float)this->numFilas / (float)numeroEsclavos;
+
 	if(ceil(aux) <= (this->numFilas - (ceil(aux) * parteMatriz))){
 		paquete->numeroRealFilasACalcular = ceil(aux);
 		paquete->filaInicial = paquete->numeroRealFilasACalcular*parteMatriz;
@@ -117,9 +129,21 @@ paqueteTrabajo *Matriz::crearPaquetesDeTrabajo(int parteMatriz, Matriz *segundaM
 		paquete->numeroRealFilasACalcular = (this->numFilas - (ceil(aux) * parteMatriz));
 		paquete->filaInicial = (ceil(aux))*parteMatriz;
 	}
-
 	paquete->numeroRealColumnasACalcular = this->numColumnas;
 	
+	//envio 
+	MPI_Send(&NUM_THREADS, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
+	MPI_Send(&paquete->filaInicial, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
+	MPI_Send(&paquete->numeroRealFilasACalcular, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
+	MPI_Send(&paquete->numeroRealColumnasACalcular, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
+
+	for (int i = 0; i < paquete->numeroRealFilasACalcular; ++i){
+		MPI_Send(this->datos[i+paquete->filaInicial], paquete->numeroRealColumnasACalcular, MPI_INT, parteMatriz+1, 0, MPI_COMM_WORLD);
+	}
+
+	for (int i = 0; i < this->numFilas; ++i){
+		MPI_Send(segundaMatriz->datos[i], paquete->numeroRealColumnasACalcular, MPI_INT, parteMatriz+1, 0, MPI_COMM_WORLD);
+	}
 
 	paquete->datosUno = (int **)malloc(sizeof(int*)*paquete->numeroRealFilasACalcular);
 	for(int i = 0; i < paquete->numeroRealFilasACalcular; i++){

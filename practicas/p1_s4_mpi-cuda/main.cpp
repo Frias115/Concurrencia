@@ -36,7 +36,9 @@ void maestro(int rank, int nproc, Matriz *m1, Matriz *m2, int numeroThreads){
 		//recibir resultados
 
 		//escribir resultado
+		cout << "Ejecuto multiplicarMatrices" << endl;
 		Matriz *resultado = m1->multiplicarMatrices(m2, numeroThreads, nproc);
+		cout << "Acaba multiplicarMatrices" << endl;
 		DEBUG_TIME_END;
 		DEBUG_PRINT_FINALTIME("Tiempo multiplicarMatrices(): \n\t");
 		resultado->guardarMatriz("resultado");
@@ -54,18 +56,62 @@ void esclavo(int rank, int nproc){
 
 	paqueteTrabajo *paquete = (paqueteTrabajo *)malloc(sizeof(paqueteTrabajo));
 	int numeroThreads = 0;
+	int filaInicial = 0;
+	int numeroRealFilasACalcular = 0;
+	int numeroRealColumnasACalcular = 0;
 
 	//recibe paquete de trabajo y numero threads
-	MPI_Recv(paquete, sizeof(paqueteTrabajo), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+	cout << rank << " -> Espera a los datos" << endl;
 	MPI_Recv(&numeroThreads, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+	MPI_Recv(&filaInicial, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+	MPI_Recv(&numeroRealFilasACalcular, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+	MPI_Recv(&numeroRealColumnasACalcular, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+
+	Matriz *matriz1 = new Matriz(numeroRealFilasACalcular, numeroRealColumnasACalcular);
+	Matriz *matriz2 = new Matriz(numeroRealColumnasACalcular, numeroRealColumnasACalcular); 
+	Matriz *resultado = new Matriz(numeroRealColumnasACalcular, numeroRealColumnasACalcular);
+
+	for (int i = 0; i < numeroRealFilasACalcular; ++i){
+		MPI_Recv(matriz1->datos[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+	}
+
+	for (int i = 0; i < numeroRealColumnasACalcular; ++i){
+		MPI_Recv(matriz2->datos[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+	}
+
+	cout << rank << " -> Recibe los datos" << endl;
 
 	//multiplicar (estatica/dinamica/gpu)
-	paquete = multiplicarMatrices(paquete, numeroThreads);
+	cout << rank << " -> Multiplica los datos" << endl;
+
+	paquete->filaInicial = filaInicial;
+	paquete->numeroRealFilasACalcular = numeroRealFilasACalcular;
+	paquete->numeroRealColumnasACalcular = numeroRealColumnasACalcular;
+	paquete->datosUno = matriz1->datos;
+	paquete->datosDos = matriz2->datos;
+	paquete->resultado = resultado->datos;
+
+	paqueteTrabajo *paqueteAux;
+
+	paqueteAux = multiplicarMatrices(paquete, numeroThreads);
+	cout << rank << " -> Recibe el resultado de multiplicar" << endl;
 
 	//enviar paquete de trabajo
-	MPI_Send(paquete, sizeof(paqueteTrabajo), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
+	cout << "paqueteAux->filaInicial " << paqueteAux->filaInicial << endl;
+	cout << "paqueteAux->numeroRealFilasACalcular" << paqueteAux->numeroRealFilasACalcular << endl;
+	cout << rank << " -> Devuelve datos al maestro" << endl;
+	MPI_Send(&paqueteAux->filaInicial, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
+	MPI_Send(&paqueteAux->numeroRealFilasACalcular, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
+	MPI_Send(&paqueteAux->numeroRealColumnasACalcular, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
 
-	free(paquete);
+
+	for (int i = 0; i < numeroRealColumnasACalcular; i++){
+		MPI_Send(paqueteAux->resultado[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD);
+	}
+
+	free(paqueteAux);
+	cout << rank << " -> Acaba" << endl;
+
 }
 
 int main(int arg, char **argv){
@@ -79,7 +125,7 @@ int main(int arg, char **argv){
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	MPI_Status status;
-
+	cout << "Leo las matrices" << endl;
 	bool leerTraspuesta = true;
 
 	//Hay que enviar la matriz por cachos
@@ -89,11 +135,15 @@ int main(int arg, char **argv){
 	Matriz *m2 = new Matriz(argv[2], leerTraspuesta);
 	int numeroThreads = atoi(argv[3]);
 
+	cout << "Termino de leer las matrices" << endl;
+
 	if(rank == 0){
+		cout << rank << " -> Entra al maestro" << endl;
 		maestro(rank, nproc, m1, m2, numeroThreads);
 	}
 	else //if(rank == 1)
 	{
+		cout << rank << " -> Entra al esclavo" << endl;
 		esclavo(rank, nproc);
 	}
 	MPI_Finalize();
