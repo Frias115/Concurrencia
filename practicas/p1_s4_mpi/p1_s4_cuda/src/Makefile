@@ -1,8 +1,8 @@
 OBJS = main.o
 EXE = main
-GCC = /usr/local/cuda/bin/nvcc   
-INCLUDES = -I/usr/lib/openmpi/include -L/usr/lib/openmpi/lib -L/usr/local/cuda/lib64 -lcudart 
-CFLAGS = -g -G -D_DEBUG
+GCC = nvcc   
+INCLUDES = -I/usr/lib/openmpi/include -L/usr/lib/openmpi/lib -lcudart 
+CFLAGS = -g 
 CXXFLAGS =
 LDFLAGS = -lmpi
 
@@ -12,5 +12,21 @@ all: $(OBJS)
 main.o: main.cu
 	$(GCC) $(INCLUDES) $(CFLAGS) $(CXXFLAGS) -c main.cu -o main.o
 	
+clean:
+	rm *.o $(EXE)
+
+
+
+OBJS = practica2Cuda.o
+EXE = multiplicadorMatrices
+GCC = nvcc
+INCLUDES = -I.
+CXXFLAGS = -g
+all: $(OBJS)
+	$(GCC) $(OBJS) $(LDFLAGS) $(CXXFLAGS) -o $(EXE)
+
+%.o: %.cu
+	$(GCC) -c $< $(CXXFLAGS) -o $@
+
 clean:
 	rm *.o $(EXE)

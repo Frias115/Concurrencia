@@ -1,13 +1,7 @@
-#ifdef __CUDACC__
-__host__ __device__
-#endif
-#ifndef _KERNEL_SUPPORT_
-#define _KERNEL_SUPPORT_
-#include "matriz.h"
 #include "debug_time.h"
-#include "mpi.h"
+#include "/usr/include/openmpi/mpi.h"
+#include "matriz.h"
 #include "practica2Cuda.h"
-#include "slave.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <complex>
@@ -154,7 +148,6 @@ int main(int arg, char **argv){
 	MPI_Finalize();
 	return 0;
 }
-#endif
 
 /*
 
@@ -169,4 +162,3 @@ hostfile.txt:
 10.4.0.44
 
 */
-

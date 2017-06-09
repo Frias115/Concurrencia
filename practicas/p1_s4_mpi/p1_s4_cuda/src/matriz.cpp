@@ -1,3 +1,4 @@
+
 #include "matriz.h"
 
 int NUM_THREADS = 1;

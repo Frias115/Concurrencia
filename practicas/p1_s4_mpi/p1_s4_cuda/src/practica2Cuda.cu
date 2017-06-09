@@ -230,7 +230,3 @@ paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
 	return paquete;
 	
 }
-
-int main(){
-	return 0;
-}
