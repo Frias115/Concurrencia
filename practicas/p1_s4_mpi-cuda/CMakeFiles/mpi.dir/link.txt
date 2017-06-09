@@ -1,1 +1,0 @@
-mpiCC    -g -std=c++11   CMakeFiles/mpi.dir/matriz.cpp.o CMakeFiles/mpi.dir/main.cpp.o CMakeFiles/mpi.dir/slave.cpp.o  -o mpi -rdynamic 

@@ -1,0 +1,3 @@
+/home/frias/Documents/Concurrencia/practicas/p1_s4_mpi/p1_s4_div_estatica/CMakeFiles/edit_cache.dir
+/home/frias/Documents/Concurrencia/practicas/p1_s4_mpi/p1_s4_div_estatica/CMakeFiles/rebuild_cache.dir
+/home/frias/Documents/Concurrencia/practicas/p1_s4_mpi/p1_s4_div_estatica/CMakeFiles/mpi.dir

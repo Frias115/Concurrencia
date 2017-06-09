@@ -1,3 +1,0 @@
-/home/frias/Documents/Concurrencia/practicas/p1_s4_mpi-cuda/CMakeFiles/edit_cache.dir
-/home/frias/Documents/Concurrencia/practicas/p1_s4_mpi-cuda/CMakeFiles/rebuild_cache.dir
-/home/frias/Documents/Concurrencia/practicas/p1_s4_mpi-cuda/CMakeFiles/mpi.dir
