@@ -1,5 +1,6 @@
 #pragma once
 #include "mpi.h"
+#include "debug_time.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -35,7 +36,7 @@ public:
 
 	void reservarMemoria();
 
-	Matriz *multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads, int numeroEsclavos);
+	Matriz *multiplicarMatrices(Matriz *segundaMatriz, int numeroEsclavos);
 
 	void enviarDatosAEsclavo(int parteMatriz, Matriz *segundaMatriz, int numeroEsclavos);
 

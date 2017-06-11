@@ -34,20 +34,9 @@ __device__ int kernel_multiplicarVectores(int lado, int* fila, int* columna){
 //llamada a la gpu para multiplicar matrices
 __global__ void kernel_multiplicarMatrices(int lado, int** matriz1, int** matriz2, int** resultado){
 	//printf("estoy multiplicando\n");
+
 	int fila = blockIdx.x * blockDim.y + threadIdx.y;
 	int columna = blockIdx.y * blockDim.x + threadIdx.x;
-
-
- 	//HABRIA QUE HACERLO CON MEMORIA COMPARTIDA PARA QUE LOS ACCESOS SEAN MUCHO MENOS https://devblogs.nvidia.com/parallelforall/using-shared-memory-cuda-cc/
- 	//LA IDEA ES PILLAR UNAS CUANTAS FILAS O COLUMNAS Y UTILIZARLAS PARA REALIZAR TODOS LOS CALCULOS, DE MANERA QUE PILLAMOS UN BLOQUE DE X COLUMNAS QUE QUEPA 
- 	// EN LOS 40K QUE ACEPTAN 1024 THREADS(32*32) Y ASI UTILIZARLA EN TODOS LOS CALCULOS
-
- 	//TAMBIEN HAY QUE COLOCAR LA PARTE DE CREAR MATRICES EN OTRO LADO
-
- 	//NO ESTARIA MAL TAMPOCO INTENTAR ARREGLARLO PARA QUE FUNCIONE CON NUESTRAS MATRICES ANTERIORES, AUNQUE TAMPOCO ES NECESARIO
-
- 	//HAY QUE VOLVER A HACER TODOS LOS CALCULOS EN LAS OTRAS ENTREGAS PARA DAR BIEN LOS TIEMPOS Y EXPLICAR PORQUE DAN QUE ERA POR LO DEL NUMERO DE CORES DEL
- 	//PROCESADOR 
 
 	//control de errores del thread
 	if((fila >= lado) || (columna >= lado)){
@@ -57,13 +46,10 @@ __global__ void kernel_multiplicarMatrices(int lado, int** matriz1, int** matriz
 
 	resultado[fila][columna] = kernel_multiplicarVectores(lado, matriz1[fila], matriz2[columna]);
 	//printf("cuda thread %d %d %.0f \n",fila,columna,resultado[fila][columna]);
+
 }
 
 paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
-
-
-	DEBUG_TIME_INIT;
-	DEBUG_TIME_START;
 
 	//Inicialización de la semilla para los números aleatorios.
 	srand(time(NULL));
@@ -88,7 +74,6 @@ paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
 	int** matrizResultado_device;
 
 	int size = paquete->numeroRealColumnasACalcular;
-
 
 	//leemos de fichero binario
 	//leerDatosBin(argv[2], &matriz1_host, leerTraspuesta, size);
@@ -152,13 +137,12 @@ paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
 
 	//Copia el contenido de los arrays de CPU a los arrays de la matriz intermedia
 	for(int i = 0; i < size; i++){
-			err1 = cudaMemcpy(matriz1_nexo[i], matriz1_host[i], size * sizeof(int),cudaMemcpyHostToDevice);
-			//printf("cudaMemcoy matriz2_host1 a nexo1 Run Kernel: %s \n", cudaGetErrorString(err1));
-			err1 = cudaMemcpy(matriz2_nexo[i], matriz2_host[i], size * sizeof(int),cudaMemcpyHostToDevice);
-			//printf("cudaMemcoy matriz2_host2 a nexo2 Run Kernel: %s \n", cudaGetErrorString(err1));
+		err1 = cudaMemcpy(matriz1_nexo[i], matriz1_host[i], size * sizeof(int),cudaMemcpyHostToDevice);
+		//printf("cudaMemcoy matriz2_host1 a nexo1 Run Kernel: %s \n", cudaGetErrorString(err1));
+		err1 = cudaMemcpy(matriz2_nexo[i], matriz2_host[i], size * sizeof(int),cudaMemcpyHostToDevice);
+		//printf("cudaMemcoy matriz2_host2 a nexo2 Run Kernel: %s \n", cudaGetErrorString(err1));
 	}
 
-	cout << "PASO" << endl;	
 	//copia el contenido del array de punteros de CPU a GPU
 	err1 = cudaMemcpy(matriz1_device, matriz1_nexo, size * sizeof(int*),cudaMemcpyHostToDevice);
 	//printf("copia de cpu a gpu array de punteros matriz1 Run Kernel: %s \n", cudaGetErrorString(err1));
@@ -180,17 +164,11 @@ paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
 
 	//printf("Antes de multiplicar\n");
 	//hace la multiplicacion en GPU
-	{
-		DEBUG_TIME_INIT;
-		DEBUG_TIME_START;
+	kernel_multiplicarMatrices <<<dimensionGrid,dimensionBlock>>>(size, matriz1_device, matriz2_device, matrizResultado_device);
 
-		kernel_multiplicarMatrices <<<dimensionGrid,dimensionBlock>>>(size, matriz1_device, matriz2_device, matrizResultado_device);
-
-		//Para que espere hasta que todos los threads terminen (CUDA THREADS SYNCRONIZE)
-		cudaError_t error = cudaDeviceSynchronize();
-		printf("Thread synchronization: %s \n", cudaGetErrorString(error));
-
-	}
+	//Para que espere hasta que todos los threads terminen (CUDA THREADS SYNCRONIZE)
+	cudaError_t error = cudaDeviceSynchronize();
+	printf("Thread synchronization: %s \n", cudaGetErrorString(error));
 
 	//pasamos el resultado de device al host
 	for(int i = 0; i < size; i++){
@@ -203,7 +181,6 @@ paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
 	//imprime la matriz resultado na vez copiada al host
 	//printf("El resultado es: \n");
 	//guardarMatriz(matrizResultado_host, size);
-
 
 	for (int i = 0; i < size; i++) {
 		for (int j = 0; j < size; j++) {

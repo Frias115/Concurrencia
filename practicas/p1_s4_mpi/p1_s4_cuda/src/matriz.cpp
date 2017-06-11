@@ -1,8 +1,6 @@
 
 #include "matriz.h"
 
-int NUM_THREADS = 1;
-
 Matriz::Matriz(string nombre, bool leerTraspuesta){
 
 	FILE *fichero = fopen(nombre.c_str(), "r+");
@@ -66,15 +64,9 @@ void Matriz::guardarMatriz(string nombre){
 	fclose(fich);
 }
 
-Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads, int numeroEsclavos) {
+Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz, int numeroEsclavos) {
 	Matriz *resultado = new Matriz(this->numFilas, this->numColumnas);
 	cout << "Tengo "  << numeroEsclavos-1 << " esclavos"<< endl;
-	if( numeroThreads <= 0){
-		NUM_THREADS = 1;
-	} else
-	{
-		NUM_THREADS = numeroThreads;
-	}
 
 	for (int i = 1; i < numeroEsclavos; i++){
 		enviarDatosAEsclavo((i -1), segundaMatriz, (numeroEsclavos -1));
@@ -93,22 +85,43 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads, in
 		int numeroRealColumnasACalcular;
 
 		//recibo
-		MPI_Recv(&filaInicial, sizeof(int), MPI_BYTE, i, 0, MPI_COMM_WORLD, &status);
-		MPI_Recv(&numeroRealFilasACalcular, sizeof(int), MPI_BYTE, i, 0, MPI_COMM_WORLD, &status);
-		MPI_Recv(&numeroRealColumnasACalcular, sizeof(int), MPI_BYTE, i, 0, MPI_COMM_WORLD, &status);
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		{
+			DEBUG_TIME_INIT;
+			DEBUG_TIME_START;
+
+			MPI_Recv(&filaInicial, sizeof(int), MPI_BYTE, i, 0, MPI_COMM_WORLD, &status);
+			MPI_Recv(&numeroRealFilasACalcular, sizeof(int), MPI_BYTE, i, 0, MPI_COMM_WORLD, &status);
+			MPI_Recv(&numeroRealColumnasACalcular, sizeof(int), MPI_BYTE, i, 0, MPI_COMM_WORLD, &status);
+
+			DEBUG_TIME_END;
+			cout << "---------------------------------------------------" << endl;
+			DEBUG_PRINT_FINALTIME("Tiempo recibir cabezera esclavo-maestro: \n\t");
+			cout << "---------------------------------------------------" << endl;
+		}
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		int** aux = (int **)malloc(sizeof(int*)*numeroRealColumnasACalcular);
 		for(int j = 0; j < numeroRealColumnasACalcular; j++){
 			aux[j] = (int*)malloc(sizeof(int)*numeroRealColumnasACalcular);
 		}
 
-		for (int j = 0; j < numeroRealColumnasACalcular; j++){
-			MPI_Recv(aux[j], numeroRealColumnasACalcular, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
-			for (int x = 0; x < this->numColumnas; ++x)
-			{
-			//cout << "j " << i << " x " << j <<" aux[j][x] " << aux[j][x] << endl;
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		{
+			DEBUG_TIME_INIT;
+			DEBUG_TIME_START;
+
+			for (int j = 0; j < numeroRealColumnasACalcular; j++){
+				MPI_Recv(aux[j], numeroRealColumnasACalcular, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
 			}
+
+
+			DEBUG_TIME_END;
+			cout << "---------------------------------------------------" << endl;
+			DEBUG_PRINT_FINALTIME("Tiempo recibir matriz resultado esclavo-maestro: \n\t");
+			cout << "---------------------------------------------------" << endl;
 		}
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		cout << "Recibo el paquete del esclavo " << i << endl;
 		//junto resultados
@@ -116,14 +129,6 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads, in
 			resultado->datos[j+filaInicial] = aux[j];
 		}
 		free(aux);
-	}
-
-	for (int i = 0; i < this->numFilas; ++i)
-	{
-		for (int j = 0; j < this->numColumnas; ++j)
-		{
-			//cout << "i " << i << " j " << j <<" resultado->datos[i][j] " << resultado->datos[i][j] << " this->datos[i][j] " << this->datos[i][j] << endl;
-		}
 	}
 
 	return resultado;
@@ -147,18 +152,29 @@ void Matriz::enviarDatosAEsclavo(int parteMatriz, Matriz *segundaMatriz, int num
 	numeroRealColumnasACalcular = this->numColumnas;
 	
 	//Envio informacion a los esclavos
-	MPI_Send(&NUM_THREADS, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
-	MPI_Send(&filaInicial, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
-	MPI_Send(&numeroRealFilasACalcular, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
-	MPI_Send(&numeroRealColumnasACalcular, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	{
+		DEBUG_TIME_INIT;
+		DEBUG_TIME_START;
 
-	for (int i = 0; i < numeroRealFilasACalcular; ++i){
-		MPI_Send(this->datos[i+filaInicial], numeroRealColumnasACalcular, MPI_INT, parteMatriz+1, 0, MPI_COMM_WORLD);
-	}
+		MPI_Send(&filaInicial, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
+		MPI_Send(&numeroRealFilasACalcular, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
+		MPI_Send(&numeroRealColumnasACalcular, sizeof(int), MPI_BYTE, parteMatriz+1, 0, MPI_COMM_WORLD);
 
-	for (int i = 0; i < this->numFilas; ++i){
-		MPI_Send(segundaMatriz->datos[i], numeroRealColumnasACalcular, MPI_INT, parteMatriz+1, 0, MPI_COMM_WORLD);
+		for (int i = 0; i < numeroRealFilasACalcular; ++i){
+			MPI_Send(this->datos[i+filaInicial], numeroRealColumnasACalcular, MPI_INT, parteMatriz+1, 0, MPI_COMM_WORLD);
+		}
+
+		for (int i = 0; i < this->numFilas; ++i){
+			MPI_Send(segundaMatriz->datos[i], numeroRealColumnasACalcular, MPI_INT, parteMatriz+1, 0, MPI_COMM_WORLD);
+		}
+
+		DEBUG_TIME_END;
+		cout << "---------------------------------------------------" << endl;
+		DEBUG_PRINT_FINALTIME("Tiempo enviar cabecera y matrices maestro-esclavo: \n\t");
+		cout << "---------------------------------------------------" << endl;
 	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
 void Matriz::imprimirMatriz(){

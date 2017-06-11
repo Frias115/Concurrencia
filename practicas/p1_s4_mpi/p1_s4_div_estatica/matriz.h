@@ -1,5 +1,6 @@
 #pragma once
 #include "mpi.h"
+#include "debug_time.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>

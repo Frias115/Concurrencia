@@ -30,13 +30,17 @@ void maestro(int rank, int nproc, Matriz *m1, Matriz *m2, int numeroThreads){
 		Matriz *resultado = m1->multiplicarMatrices(m2, numeroThreads, nproc);
 		cout << "Acaba multiplicarMatrices" << endl;
 		DEBUG_TIME_END;
+		cout << "***************************************************" << endl;
 		DEBUG_PRINT_FINALTIME("Tiempo multiplicarMatrices(): \n\t");
+		cout << "***************************************************" << endl;
 		resultado->guardarMatriz("resultado");
 	}
 
 	DEBUG_TIME_END;
 
+	cout << "***************************************************" << endl;
 	DEBUG_PRINT_FINALTIME("Tiempo Total: \n\t");
+	cout << "***************************************************" << endl;
 }
 
 void esclavo(int rank, int nproc){
@@ -50,24 +54,49 @@ void esclavo(int rank, int nproc){
 	int numeroRealFilasACalcular = 0;
 	int numeroRealColumnasACalcular = 0;
 
-	//Recibe la informacion 
-	cout << rank << " -> Espera a los datos" << endl;
-	MPI_Recv(&numeroThreads, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
-	MPI_Recv(&filaInicial, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
-	MPI_Recv(&numeroRealFilasACalcular, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
-	MPI_Recv(&numeroRealColumnasACalcular, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	{
+		DEBUG_TIME_INIT;
+		DEBUG_TIME_START;
+
+		//Recibe la informacion 
+		cout << rank << " -> Espera a los datos" << endl;
+		MPI_Recv(&numeroThreads, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+		MPI_Recv(&filaInicial, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+		MPI_Recv(&numeroRealFilasACalcular, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+		MPI_Recv(&numeroRealColumnasACalcular, sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+
+		DEBUG_TIME_END;
+		cout << "---------------------------------------------------" << endl;
+		DEBUG_PRINT_FINALTIME("Tiempo recibir cabecera esclavo-maestro: \n\t");
+		cout << "---------------------------------------------------" << endl;
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	Matriz *matriz1 = new Matriz(numeroRealFilasACalcular, numeroRealColumnasACalcular);
 	Matriz *matriz2 = new Matriz(numeroRealColumnasACalcular, numeroRealColumnasACalcular); 
 	Matriz *resultado = new Matriz(numeroRealColumnasACalcular, numeroRealColumnasACalcular);
 
-	for (int i = 0; i < numeroRealFilasACalcular; ++i){
-		MPI_Recv(matriz1->datos[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	{
+		DEBUG_TIME_INIT;
+		DEBUG_TIME_START;
 
-	for (int i = 0; i < numeroRealColumnasACalcular; ++i){
-		MPI_Recv(matriz2->datos[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+		for (int i = 0; i < numeroRealFilasACalcular; ++i){
+			MPI_Recv(matriz1->datos[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+		}
+
+		for (int i = 0; i < numeroRealColumnasACalcular; ++i){
+			MPI_Recv(matriz2->datos[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+		}
+
+		DEBUG_TIME_END;
+		cout << "---------------------------------------------------" << endl;
+		DEBUG_PRINT_FINALTIME("Tiempo recibir matrices esclavo-maestro: \n\t");
+		cout << "---------------------------------------------------" << endl;
 	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	cout << rank << " -> Recibe los datos" << endl;
 
@@ -85,6 +114,12 @@ void esclavo(int rank, int nproc){
 	paqueteAux = multiplicarMatrices(paquete, numeroThreads);
 	cout << rank << " -> Recibe el resultado de multiplicar" << endl;
 
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	{
+		DEBUG_TIME_INIT;
+		DEBUG_TIME_START;
+
 	//Enviar informacion de vuelta al maestro
 	cout << "paqueteAux->filaInicial " << paqueteAux->filaInicial << endl;
 	cout << "paqueteAux->numeroRealFilasACalcular" << paqueteAux->numeroRealFilasACalcular << endl;
@@ -97,6 +132,13 @@ void esclavo(int rank, int nproc){
 	for (int i = 0; i < numeroRealColumnasACalcular; i++){
 		MPI_Send(paqueteAux->resultado[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD);
 	}
+
+		DEBUG_TIME_END;
+		cout << "---------------------------------------------------" << endl;
+		DEBUG_PRINT_FINALTIME("Tiempo enviar cabecera y matriz resultado esclavo-maestro: \n\t");
+		cout << "---------------------------------------------------" << endl;
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	free(paqueteAux);
 	cout << rank << " -> Acaba" << endl;
