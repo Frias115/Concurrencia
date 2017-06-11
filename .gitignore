@@ -222,3 +222,15 @@ bh_unicode_properties.cache
 GitHub.sublime-settings
 
 # End of https://www.gitignore.io/api/c,c++,cuda,eclipse,sublimetext
+
+practicas/p1_s4_mpi/p1_s4_cuda/src/diezaleatoria
+
+practicas/p1_s4_mpi/p1_s4_cuda/src/diezientidad
+
+practicas/p1_s4_mpi/p1_s4_cuda/src/dosmilaleatoria
+
+practicas/p1_s4_mpi/p1_s4_cuda/src/dosmilidentidad
+
+practicas/p1_s4_mpi/p1_s4_cuda/src/milaleatoria
+
+practicas/p1_s4_mpi/p1_s4_cuda/src/milidentidad

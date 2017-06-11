@@ -34,7 +34,7 @@ mpiCC *.o -L/usr/local/cuda/lib64  -lcudart -o mulMatrixMPI
 
 
 # Ejecuta el programa con los distintos argumantos
-# optirun mpirun -np 3 mulMatrixMPI dosmilaleatoria dosmilidentidad 4
+# optirun --no-xorg mpirun -np 3 mulMatrixMPI dosmilaleatoria dosmilidentidad 4
 
 
 

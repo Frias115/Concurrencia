@@ -72,12 +72,45 @@ void esclavo(int rank, int nproc){
 	Matriz *matriz2 = new Matriz(numeroRealColumnasACalcular, numeroRealColumnasACalcular); 
 	Matriz *resultado = new Matriz(numeroRealColumnasACalcular, numeroRealColumnasACalcular);
 
+	int **matriz1_host = (int **)malloc(sizeof(int *) * numeroRealColumnasACalcular);
+	for (int i = 0; i < numeroRealColumnasACalcular; i++) {
+		matriz1_host[i] = (int *)malloc(sizeof(int) * numeroRealColumnasACalcular);
+	}
+
+	float **matriz2_host = (float **)malloc(sizeof(float *) * numeroRealColumnasACalcular);
+	for (int i = 0; i < numeroRealColumnasACalcular; i++) {
+		matriz2_host[i] = (float *)malloc(sizeof(float) * numeroRealColumnasACalcular);
+	}
+
+	float **matrizres_host = (float **)malloc(sizeof(float *) * numeroRealColumnasACalcular);
+	for (int i = 0; i < numeroRealColumnasACalcular; i++) {
+		matrizres_host[i] = (float *)malloc(sizeof(float) * numeroRealColumnasACalcular);
+	}
+
+	for (int i = 0; i < numeroRealColumnasACalcular; i++) {
+		for (int j = 0; j < numeroRealColumnasACalcular; j++) {
+			matriz1_host[i][j] = 0;
+		}
+	}
+
 	for (int i = 0; i < numeroRealFilasACalcular; ++i){
 		MPI_Recv(matriz1->datos[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 	}
 
+	for (int i = 0; i < numeroRealFilasACalcular; i++) {
+		for (int j = 0; j < numeroRealColumnasACalcular; j++) {
+			matriz1_host[i][j] = matriz1->datos[i][j];
+		}
+	}
+
 	for (int i = 0; i < numeroRealColumnasACalcular; ++i){
 		MPI_Recv(matriz2->datos[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+	}
+
+	for (int i = 0; i < numeroRealColumnasACalcular; i++) {
+		for (int j = 0; j < numeroRealColumnasACalcular; j++) {
+			matriz2_host[i][j] = (float)matriz2->datos[i][j];
+		}
 	}
 
 	cout << rank << " -> Recibe los datos" << endl;
@@ -86,7 +119,7 @@ void esclavo(int rank, int nproc){
 	paquete->filaInicial = filaInicial;
 	paquete->numeroRealFilasACalcular = numeroRealFilasACalcular;
 	paquete->numeroRealColumnasACalcular = numeroRealColumnasACalcular;
-	paquete->datosUno = matriz1->datos;
+	paquete->datosUno = matriz1_host;
 	paquete->datosDos = matriz2->datos;
 	paquete->resultado = resultado->datos;
 
@@ -95,6 +128,12 @@ void esclavo(int rank, int nproc){
 	cout << rank << " -> Multiplica los datos" << endl;
 	paqueteAux = mainCuda(paquete);
 	cout << rank << " -> Recibe el resultado de multiplicar" << endl;
+
+	for (int i = 0; i < numeroRealFilasACalcular; i++) {
+		for (int j = 0; j < numeroRealColumnasACalcular; j++) {	
+			//resultado->datos[i+filaInicial][j] = matrizres_host[i][j];
+		}
+	}
 
 	//Enviar informacion de vuelta al maestro
 	cout << "paqueteAux->filaInicial " << paqueteAux->filaInicial << endl;
@@ -106,10 +145,11 @@ void esclavo(int rank, int nproc){
 
 
 	for (int i = 0; i < numeroRealColumnasACalcular; i++){
-		MPI_Send(paqueteAux->resultado[i], numeroRealColumnasACalcular, MPI_INT, 0, 0, MPI_COMM_WORLD);
+		MPI_Send(paqueteAux->resultado[i], numeroRealColumnasACalcular * sizeof(int), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
 	}
 
 	free(paqueteAux);
+	
 	cout << rank << " -> Acaba" << endl;
 
 }

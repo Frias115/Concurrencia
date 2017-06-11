@@ -104,14 +104,26 @@ Matriz *Matriz::multiplicarMatrices(Matriz *segundaMatriz, int numeroThreads, in
 
 		for (int j = 0; j < numeroRealColumnasACalcular; j++){
 			MPI_Recv(aux[j], numeroRealColumnasACalcular, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
+			for (int x = 0; x < this->numColumnas; ++x)
+			{
+			//cout << "j " << i << " x " << j <<" aux[j][x] " << aux[j][x] << endl;
+			}
 		}
 
 		cout << "Recibo el paquete del esclavo " << i << endl;
 		//junto resultados
-		for (int j = 0; j < numeroRealColumnasACalcular; j++){
-			resultado->datos[j+filaInicial] = aux[j+filaInicial];
+		for (int j = 0; j < numeroRealFilasACalcular; j++){
+			resultado->datos[j+filaInicial] = aux[j];
 		}
 		free(aux);
+	}
+
+	for (int i = 0; i < this->numFilas; ++i)
+	{
+		for (int j = 0; j < this->numColumnas; ++j)
+		{
+			//cout << "i " << i << " j " << j <<" resultado->datos[i][j] " << resultado->datos[i][j] << " this->datos[i][j] " << this->datos[i][j] << endl;
+		}
 	}
 
 	return resultado;

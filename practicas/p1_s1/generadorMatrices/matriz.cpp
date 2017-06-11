@@ -27,7 +27,7 @@ void Matriz::rellenarMatriz(){
 	else{
 		for(int i = 0; i < numFilas; i++){
 			for(int j = 0; j < numColumnas; j++){
-				this->datos[i][j] = (int)rand() % 10;
+				this->datos[i][j] = (int)rand();
 			}
 		}
 	}
