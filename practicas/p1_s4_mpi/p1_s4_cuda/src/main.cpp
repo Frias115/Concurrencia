@@ -1,3 +1,14 @@
+/* 
+/usr/local/cuda/bin/nvcc -I/usr/lib/openmpi/include -L/usr/lib/openmpi/lib -c practica2Cuda.cu -o practica2Cuda.o	
+
+mpiCC  -c main.cpp -o main.o
+mpiCC  -c matriz.cpp -o matriz.o 
+mpiCC *.o -L/usr/local/cuda/lib64  -lcudart -o mulMatrixMPI
+
+optirun mpirun -np 3 mulMatrixMPI dosmilaleatoria dosmilidentidad 4
+
+*/
+
 #include "debug_time.h"
 #include "/usr/include/openmpi/mpi.h"
 #include "matriz.h"

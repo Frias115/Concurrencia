@@ -14,8 +14,6 @@ extern "C" {
 #endif
 
 	paqueteTrabajo* mainCuda(paqueteTrabajo* paquete);
-	float kernel_multiplicarVectores(int lado, float* fila, float* columna);
-	void kernel_multiplicarMatrices(int lado, float** matriz1, float** matriz2, float** resultado);
 
 #ifdef  __cplusplus
 }

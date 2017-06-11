@@ -73,8 +73,9 @@ paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
 
 	//CARGA E INICIALIZACION DE LAS MATRICES
 	//CPU
-	float** matriz1_host = (float**)paquete->datosUno;
-	float** matriz2_host = (float**)paquete->datosDos;
+	cout << "Recibo las matrices en CUDA" << endl;
+	float** matriz1_host;
+	float** matriz2_host;
 	float** matrizResultado_host;
 
 	//NEXO (memoria intermedia)
@@ -88,6 +89,7 @@ paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
 	float** matrizResultado_device;
 
 	int size = paquete->numeroRealColumnasACalcular;
+	cout << "size" << size << endl;
 
 	//leemos de fichero binario
 	//leerDatosBin(argv[2], &matriz1_host, leerTraspuesta, size);
@@ -105,26 +107,50 @@ paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
 	//printf("MATRIZ B traspuesta: \n\n");
 	//imprimirMatriz(matriz2_host);
 
+	matriz1_host = (float **)malloc(sizeof(float *) * size);
+	for (int i = 0; i < size; i++) {
+		matriz1_host[i] = (float *)malloc(sizeof(float) * size);
+	}
+
+	matriz1_host = (float**)paquete->datosUno;
+
+	cout << "Paso uno" << endl;
+	matriz2_host = (float **)malloc(sizeof(float *) * size);
+	for (int i = 0; i < size; i++) {
+		matriz2_host[i] = (float *)malloc(sizeof(float) * size);
+	}
+
+	matriz2_host = (float**)paquete->datosDos;
+	
+	cout << "Paso dos" << endl;
+
 	//Reserva para el resultado del host
 	matrizResultado_host = (float**)malloc(size * sizeof(float*));
 	for(int i=0; i < size; i++){
 		matrizResultado_host[i] = (float*)malloc(size * sizeof(float));
 	}
 
+	cout << "Pasa resultado" << endl;
+
+	cout << "Reserva de la memoria intermedia" << endl;
 	//Reserva de la memoria intermedia
 	matriz1_nexo = (float**)malloc(size * sizeof(float*));
 	matriz2_nexo = (float**)malloc(size * sizeof(float*));
 	matrizResultado_nexo = (float**)malloc(size * sizeof(float*));
+	cout << "Reserva de la memoria intermedia DONE" << endl;
 
+	cout << "Reserva de memoria en GPU" << endl;
 	//Reserva de memoria en GPU
 	cudaError_t err1 = cudaMalloc((void**)&matriz1_device, sizeof(float*)* size);
 	//printf("Run Kernel: %s \n", cudaGetErrorString(err1));
+	cout << "Reserva de memoria en GPU DONE" << endl;
 
 	err1 = cudaMalloc((void**)&matriz2_device, sizeof(float*)* size);
 	//printf("Run Kernel: %s \n", cudaGetErrorString(err1));
 	err1 = cudaMalloc((void**)&matrizResultado_device, sizeof(float*)* size);
 	//printf("Run Kernel: %s \n", cudaGetErrorString(err1));
 
+	cout << "Reserva de memoria para cada uno de los arrays intermedios" << endl;	
 	//Reserva de memoria para cada uno de los arrays intermedios
 	for(int i = 0; i < size; i++){
 		err1 = cudaMalloc((void**)&matriz1_nexo[i], sizeof(float)* size);
@@ -133,7 +159,9 @@ paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
 		//printf("matriz2_nexo Run Kernel: %s \n", cudaGetErrorString(err1));
 		cudaMalloc((void**)&(matrizResultado_nexo[i]), sizeof(float)* size);
 	}
+	cout << "Reserva de memoria para cada uno de los arrays intermedios DONE" << endl;
 
+	cout << "Copia el contenido de los arrays de CPU a los arrays de la matriz intermedia" << endl;
 	//Copia el contenido de los arrays de CPU a los arrays de la matriz intermedia
 	for(int i = 0; i < size; i++){
 			err1 = cudaMemcpy(matriz1_nexo[i], matriz1_host[i], size * sizeof(float),cudaMemcpyHostToDevice);
@@ -141,6 +169,7 @@ paqueteTrabajo* mainCuda(paqueteTrabajo* paquete){
 			err1 = cudaMemcpy(matriz2_nexo[i], matriz2_host[i], size * sizeof(float),cudaMemcpyHostToDevice);
 			//printf("cudaMemcoy matriz2_host2 a nexo2 Run Kernel: %s \n", cudaGetErrorString(err1));
 	}
+	cout << "Copia el contenido de los arrays de CPU a los arrays de la matriz intermedia DONE" << endl;
 
 	//copia el contenido del array de punteros de CPU a GPU
 	err1 = cudaMemcpy(matriz1_device, matriz1_nexo, size * sizeof(float*),cudaMemcpyHostToDevice);
